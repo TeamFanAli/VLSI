@@ -9,12 +9,16 @@ def preprocess(path):
         data = txt_file.readlines()
     data[0] = "w=" + data[0].replace("\n", ";\n")
     data[1] = "n=" + data[1].replace("\n", ";\n")
-    chips = 'chips=[|'
+    duration = 'duration=['
+    req = 'req=['
     for i in range(2, len(data)):
         line = data[i].replace('\n', '').split(' ')
-        chips += line[1] + ',' + line[0]  # flip
+        duration += line[1]
+        req += line[0]
         if not i == len(data) - 1:
-            chips += ',\n|'
+            duration += ','
+            req += ','
         else:
-            chips += '|];\n'
-    return data[0] + data[1] + chips
+            duration += '];\n'
+            req += '];\n'
+    return data[0] + data[1] + duration + req
