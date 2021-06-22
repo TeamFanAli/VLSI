@@ -29,11 +29,15 @@ def print_rectangles():
 
     # define Matplotlib figure and axis
     fig = plt.figure()
+    ax = fig.gca()
+    ax.set_xticks(range(width))
+    ax.set_yticks(range(height))
     plt.xlim(0, width)
     plt.ylim(0, height)
     for rectangle in rectangles:
-        fig.gca().add_patch(Rectangle((rectangle[2], rectangle[3]), rectangle[0], rectangle[1], fill=True,
-                                      color=random_color(), alpha=0.5, zorder=100, figure=fig))
+        ax.add_patch(Rectangle((rectangle[2], rectangle[3]), rectangle[0], rectangle[1], fill=True,
+                               color=random_color(), alpha=0.5, zorder=100, figure=fig))
+    plt.grid()
     plt.show()
 
 

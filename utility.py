@@ -22,3 +22,17 @@ def preprocess(path):
             duration += '];\n'
             req += '];\n'
     return data[0] + data[1] + duration + req
+
+
+def preprocess_for_py(file):
+    with file as txt_file:
+        width = int(txt_file.readline())
+        n = int(txt_file.readline())
+        durations = []
+        req = []
+        for i in range(n):
+            vals = [int(s)
+                    for s in txt_file.readline().split()]
+            durations.append(vals[0])
+            req.append(vals[1])
+    return width, n, durations, req
