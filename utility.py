@@ -1,3 +1,8 @@
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+import random
+
+
 def preprocess(path):
     """
     Transform txt files in a string containing data readable from Minizinc.
@@ -30,10 +35,11 @@ def preprocess_for_py(input):
     durations = []
     req = []
     for i in range(2, len(input)):
-        vals = [int(s)
-                for s in input[i].split()]
-        durations.append(vals[0])
-        req.append(vals[1])
+        if input[i] != "":
+            vals = [int(s)
+                    for s in input[i].split()]
+            durations.append(vals[0])
+            req.append(vals[1])
     return width, n, durations, req
 
 
@@ -60,3 +66,39 @@ def postprocess(input, output):
     for j in range(2, len(input)-1):
         input[j] += " {0} {1}".format(y[j-2], starts[j-2])
     return '\n'.join(input)
+
+
+def print_rectangles_from_string(result):
+    """Prints the rectangles found in the solution
+    """
+    rectangles = []
+    result = result.split('\n')
+    width, height = [int(s) for s in result[0].split()]
+    n = int(result[1])
+    for i in range(2, len(result)):
+        if result[i] != "":
+            vals = [int(s)
+                    for s in result[i].split()]
+            rectangles.append(vals)
+
+    # define Matplotlib figure and axis
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.set_xticks(range(width))
+    ax.set_yticks(range(height))
+    plt.xlim(0, width)
+    plt.ylim(0, height)
+    for rectangle in rectangles:
+        ax.add_patch(Rectangle((rectangle[2], rectangle[3]), rectangle[0], rectangle[1], fill=True,
+                               color=random_color(), alpha=0.5, zorder=100, figure=fig))
+    plt.grid()
+    plt.show()
+
+
+def random_color():
+    """Generates a random RGBA color
+
+    Returns:
+        tuple: Tuple of RGB channels in [0,1]
+    """
+    return (random.random(), random.random(), random.random())

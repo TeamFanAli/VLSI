@@ -2,7 +2,7 @@
     Script that runs the preprocessing step, the MiniZinc optimizer, then the output graph
     """
 import argparse
-from utility import preprocess_for_py, postprocess
+from utility import preprocess_for_py, postprocess, print_rectangles_from_string
 from minizinc import Instance, Model, Solver
 
 
@@ -14,7 +14,8 @@ class CPRunner():
 
     def read_file(self):
         with self.args.file as txt_file:
-            self.input_lines = txt_file.readlines()
+            self.input_lines = txt_file.read().split('\n')
+        print(self.input_lines)
 
     def register_args(self):
         parser = argparse.ArgumentParser(
@@ -36,7 +37,8 @@ class CPRunner():
         instance["w"] = width
         result = instance.solve()
         # Output the array q
-        print((postprocess(self.input_lines, str(result))))
+        solution_txt = postprocess(self.input_lines, str(result))
+        print_rectangles_from_string(solution_txt)
 
 
 if __name__ == "__main__":
