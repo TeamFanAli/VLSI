@@ -2,14 +2,19 @@
     Script that runs the preprocessing step, the MiniZinc optimizer, then the output graph
     """
 import argparse
-from utility import preprocess_for_py
+from utility import preprocess_for_py, postprocess
 from minizinc import Instance, Model, Solver
 
 
 class CPRunner():
     def __init__(self):
         self.register_args()
+        self.read_file()
         self.preprocess_and_run()
+
+    def read_file(self):
+        with self.args.file as txt_file:
+            self.input_lines = txt_file.readlines()
 
     def register_args(self):
         parser = argparse.ArgumentParser(
@@ -18,7 +23,7 @@ class CPRunner():
         self.args = parser.parse_args()
 
     def preprocess_and_run(self):
-        width, n, durations, req = preprocess_for_py(self.args.file)
+        width, n, durations, req = preprocess_for_py(self.input_lines)
         # Load n-Queens model from file
         vlsi = Model("./vlsi.mzn")
         # Find the MiniZinc solver configuration for Gecode
@@ -31,7 +36,7 @@ class CPRunner():
         instance["w"] = width
         result = instance.solve()
         # Output the array q
-        print(result)
+        print((postprocess(self.input_lines, str(result))))
 
 
 if __name__ == "__main__":
