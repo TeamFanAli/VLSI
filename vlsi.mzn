@@ -22,6 +22,7 @@ solve minimize makespan;
 
 output [
     "Start times = ", show(start), "\n",
-    "End times   =", show([start[i]+duration[i] | i in CHIPS]), "\n",
+    "End times = ", show([start[i]+duration[i] | i in CHIPS]), "\n",
+    "Reqs = ", show(req), "\n",
     "makespan = ", show(makespan), "\n"
 ];
