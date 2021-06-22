@@ -22,3 +22,29 @@ def preprocess(path):
             duration += '];\n'
             req += '];\n'
     return data[0] + data[1] + duration + req
+
+
+def postprocess(input, output):
+    """
+    Transform the output of MiniZinc in a format suitable with project specs
+    :param input: The text contained in the original input file
+    :param output: the text returned by MiniZinc
+    :return: string containing the result formatted as project specs require
+    """
+    input = input.split('\n')
+    output = output.split('\n')
+    makespan = int(output[3][len("makespan = "):])
+    starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
+    ends = map(int, output[1][len("End times = ["):-1].split(','))
+    reqs = map(int, output[2][len("Reqs = ["):-1].split(','))
+    h = [0 for _ in range(makespan)]
+    y = []
+    for s, e, r in zip(starts, ends, reqs):
+        y.append(h[s])
+        h[s:e] = (x + y for (x, y) in zip(h[s:e], [r for _ in range(s, e)]))
+    print(y)
+    print(h)
+    input[0] += " {0}".format(makespan)
+    for j in range(2, len(input)-1):
+        input[j] += " {0} {1}".format(y[j-2], starts[j-2])
+    return '\n'.join(input)
