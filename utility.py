@@ -38,8 +38,8 @@ def preprocess_for_py(input):
         if input[i] != "":
             vals = [int(s)
                     for s in input[i].split()]
-            durations.append(vals[0])
-            req.append(vals[1])
+            durations.append(vals[1])
+            req.append(vals[0])
     return width, n, durations, req
 
 
