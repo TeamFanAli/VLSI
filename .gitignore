@@ -1,1 +1,2 @@
-ins-1.txt
+instances/*
+__pycache__/utility.cpython-38.pyc

@@ -38,6 +38,8 @@ class CPRunner():
         result = instance.solve()
         # Output the array q
         solution_txt = postprocess(self.input_lines, str(result))
+        print("Found a solution!")
+        print(solution_txt)
         print_rectangles_from_string(solution_txt)
 
 
