@@ -59,7 +59,8 @@ def postprocess(input, output):
     y = []
     for s, e, r in zip(starts, ends, reqs):
         y.append(h[s])
-        h[s:e] = (x + y for (x, y) in zip(h[s:e], [r for _ in range(s, e)]))
+        h[s] = h[s] + r
+        h[s+1:e] = [h[s] for _ in range(s+1, e)]
     print(y)
     print(h)
     input[0] += " {0}".format(makespan)

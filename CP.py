@@ -37,6 +37,7 @@ class CPRunner():
         instance["w"] = width
         result = instance.solve()
         # Output the array q
+        print(result)
         solution_txt = postprocess(self.input_lines, str(result))
         print("Found a solution!")
         print(solution_txt)
