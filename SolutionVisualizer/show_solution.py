@@ -11,6 +11,17 @@ from matplotlib.patches import Rectangle
 import random
 import argparse
 
+def random_color():
+    """Generates a random RGBA color
+
+    Returns:
+        tuple: Tuple of RGB channels in [0,1]
+    """
+    return (random.random(), random.random(), random.random())
+
+
+def random_hatch():
+    return random.choice(['-', '+', 'x', '\\', '*', 'o', 'O', '.'])
 
 def print_rectangles():
     """Prints the rectangles found in the solution
@@ -36,18 +47,12 @@ def print_rectangles():
     plt.ylim(0, height)
     for rectangle in rectangles:
         ax.add_patch(Rectangle((rectangle[2], rectangle[3]), rectangle[0], rectangle[1], fill=True,
-                               color=random_color(), alpha=0.5, zorder=100, figure=fig))
+                               facecolor=random_color(), hatch="*", alpha=0.5, zorder=100, figure=fig))
     plt.grid()
     plt.show()
 
 
-def random_color():
-    """Generates a random RGBA color
 
-    Returns:
-        tuple: Tuple of RGB channels in [0,1]
-    """
-    return (random.random(), random.random(), random.random())
 
 
 if __name__ == "__main__":

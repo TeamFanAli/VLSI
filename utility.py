@@ -56,16 +56,14 @@ def postprocess(input, output):
     ends = map(int, output[1][len("End times = ["):-1].split(','))
     reqs = map(int, output[2][len("Reqs = ["):-1].split(','))
     h = [0 for _ in range(makespan)]
-    y = []
-    for s, e, r in zip(starts, ends, reqs):
-        y.append(h[s])
-        h[s] = h[s] + r
-        h[s+1:e] = [h[s] for _ in range(s+1, e)]
-    print(y)
-    print(h)
+    y = [0 for _ in range(len(starts))]
+    for i, (s, e, r) in sorted(enumerate(zip(starts, ends, reqs)), key=lambda x: (x[1][0], x[1][2])):
+        y[i] = max(h[s:e])
+        h[s:e] = [h[j] + r if h[j] == y[i] else h[j] for j in range(s, e)]
+        print(h)
     input[0] += " {0}".format(makespan)
-    for j in range(2, len(input)-1):
-        input[j] += " {0} {1}".format(y[j-2], starts[j-2])
+    for j in range(2, len(input) - 1):
+        input[j] += " {0} {1}".format(y[j - 2], starts[j - 2])
     return '\n'.join(input)
 
 
@@ -91,9 +89,13 @@ def print_rectangles_from_string(result):
     plt.ylim(0, height)
     for rectangle in rectangles:
         ax.add_patch(Rectangle((rectangle[2], rectangle[3]), rectangle[0], rectangle[1], fill=True,
-                               color=random_color(), alpha=0.5, zorder=100, figure=fig))
+                               color=random_color(), hatch=random_hatch(), alpha=0.5, zorder=100, figure=fig))
     plt.grid()
     plt.show()
+
+
+def random_hatch():
+    return random.choice(['', '/', '//', 'xx', '\\', '\\\\', 'O', 'o', '.'])
 
 
 def random_color():
