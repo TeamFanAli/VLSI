@@ -55,12 +55,15 @@ def postprocess(input, output):
     starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
     ends = map(int, output[1][len("End times = ["):-1].split(','))
     reqs = map(int, output[2][len("Reqs = ["):-1].split(','))
+    y = list(map(int, output[4][len("y = ["):-1].split(',')))
     h = [0 for _ in range(makespan)]
-    y = [0 for _ in range(len(starts))]
+    #y = [0 for _ in range(len(starts))]
+    """
     for i, (s, e, r) in sorted(enumerate(zip(starts, ends, reqs)), key=lambda x: (x[1][0], x[1][2])):
         y[i] = max(h[s:e])
         h[s:e] = [h[j] + r if h[j] == y[i] else h[j] for j in range(s, e)]
         print(h)
+    """
     input[0] += " {0}".format(makespan)
     for j in range(2, len(input) - 1):
         input[j] += " {0} {1}".format(y[j - 2], starts[j - 2])
