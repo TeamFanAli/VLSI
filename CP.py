@@ -4,6 +4,7 @@
 import argparse
 from utility import preprocess_for_py, postprocess, print_rectangles_from_string
 from minizinc import Instance, Model, Solver
+from datetime import timedelta
 
 
 class CPRunner():
@@ -35,7 +36,7 @@ class CPRunner():
         instance["duration"] = durations
         instance["req"] = req
         instance["w"] = width
-        result = instance.solve()
+        result = instance.solve(timeout=timedelta(minutes=3))
         # Output the array q
         print(result)
         solution_txt = postprocess(self.input_lines, str(result))
