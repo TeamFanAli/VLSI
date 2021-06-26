@@ -9,7 +9,7 @@ array[CHIPS] of int: req; %Resource requirements of tasks
 
 
 int: t = sum(duration); 
-array[CHIPS] of var 0..t: start; %Variables for task start times
+array[CHIPS] of var 0..t-1: start; %Variables for task start times
 
 array[CHIPS] of var 0..w: chip_x;
 
