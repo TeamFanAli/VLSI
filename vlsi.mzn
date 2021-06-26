@@ -20,13 +20,13 @@ constraint cumulative(start, duration, [req[c] | c in CHIPS], w);
 %Rect.Top = start[i]+duration[i]
 %Rect.Right = chip_x[i]+req[i]
 %Rect.Bottom = start[i]
-constraint forall(i in CHIPS, j in CHIPS where i != j) ((chip_x[i]+req[i] <= chip_x[j]) \/ 
-                                            (chip_x[j] + req[j] <= chip_x[i]) \/ 
-                                            (start[i] >= start[j]+duration[j]) \/ 
+constraint forall(i in CHIPS, j in CHIPS where i != j) ((chip_x[i]+req[i] <= chip_x[j]) \/
+                                            (chip_x[j] + req[j] <= chip_x[i]) \/
+                                            (start[i] >= start[j]+duration[j]) \/
                                             (start[j] >= start[i]+duration[i]));
 
 %makespan as objective function
-var int: makespan = max(c in CHIPS)(start[c] + duration[c]);
+var max(duration)..sum(duration): makespan = max(c in CHIPS)(start[c] + duration[c]);
 
 solve minimize makespan;
 
