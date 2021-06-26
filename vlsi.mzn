@@ -11,9 +11,15 @@ array[CHIPS] of int: req; %Resource requirements of tasks
 int: t = sum(duration); 
 array[CHIPS] of var 0..t: start; %Variables for task start times
 
+array[CHIPS] of var 0..w: chip_x;
 
 %resource constraints
 constraint cumulative(start, duration, [req[c] | c in CHIPS], w);
+constraint forall(i in CHIPS, j in CHIPS) ((chip_x[i] <= chip_x[j]+req[j]) /\ (chip_x[i]+req[i] >= chip_x[j]) /\ (start[i]+duration[i] >= start[j]) /\ (start[i] <= start[j] + duration[j]));
+%Rect.Left = chip_x[i]
+%Rect.Top = start[i]+duration[i]
+%Rect.Right = chip_x[i]+req[i]
+%Rect.Bottom = start[i]
 
 %makespan as objective function
 var int: makespan = max(c in CHIPS)(start[c] + duration[c]);
@@ -24,5 +30,6 @@ output [
     "Start times = ", show(start), "\n",
     "End times = ", show([start[i]+duration[i] | i in CHIPS]), "\n",
     "Reqs = ", show(req), "\n",
-    "makespan = ", show(makespan), "\n"
+    "makespan = ", show(makespan), "\n",
+    "y = " ,show(chip_x)
 ];
