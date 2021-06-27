@@ -2,7 +2,7 @@
     Script that runs the preprocessing step, the MiniZinc optimizer, then the output graph
     """
 import argparse
-from utility import preprocess_for_py, postprocess, print_rectangles_from_string
+from utility import preprocess_for_py, postprocess, print_rectangles_from_string, split_results_from_string
 from minizinc import Instance, Model, Solver
 from datetime import timedelta
 
@@ -43,6 +43,17 @@ class CPRunner():
         print("Found a solution!")
         print(solution_txt)
         print_rectangles_from_string(solution_txt)
+        width, height, n, rectangles = split_results_from_string(solution_txt)
+        x_finder = Model(".x-finder.mzn")
+        x_instance = Instance(gecode, x_finder)
+        x_instance["n"] = n
+        x_instance["x"] = [row[3] for row in rectangles]
+        x_instance["duration"] = durations
+        x_instance["req"] = req
+        x_instance["w"] = width
+        x_instance["makespan"] = height
+        final = x_instance.solve(timeout=timedelta(minutes=1))
+        print(final)
 
 
 if __name__ == "__main__":

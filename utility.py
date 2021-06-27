@@ -43,6 +43,23 @@ def preprocess_for_py(input):
     return width, n, durations, req
 
 
+def split_output(output):
+    """Splits the output from a minizinc solving
+
+    Args:
+        output (string): MiniZinc output
+
+    Returns:
+        tuple: The minizinc variables
+    """
+    output = output.split('\n')
+    makespan = int(output[3][len("makespan = "):])
+    starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
+    ends = map(int, output[1][len("End times = ["):-1].split(','))
+    reqs = map(int, output[2][len("Reqs = ["):-1].split(','))
+    return makespan, starts, ends, reqs
+
+
 def postprocess(input, output):
     """
     Transform the output of MiniZinc in a format suitable with project specs
@@ -50,11 +67,7 @@ def postprocess(input, output):
     :param output: the text returned by MiniZinc
     :return: string containing the result formatted as project specs require
     """
-    output = output.split('\n')
-    makespan = int(output[3][len("makespan = "):])
-    starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
-    ends = map(int, output[1][len("End times = ["):-1].split(','))
-    reqs = map(int, output[2][len("Reqs = ["):-1].split(','))
+    makespan, starts, ends, reqs = split_output(output)
     y = list(map(int, output[4][len("y = ["):-1].split(',')))
     h = [0 for _ in range(makespan)]
     #y = [0 for _ in range(len(starts))]
@@ -70,8 +83,14 @@ def postprocess(input, output):
     return '\n'.join(input)
 
 
-def print_rectangles_from_string(result):
-    """Prints the rectangles found in the solution
+def split_results_from_string(result):
+    """Generates a tuple of results from a solution txt (as seen in the project specs)
+
+    Args:
+        result (strin): solution text
+
+    Returns:
+        tuple: The results
     """
     rectangles = []
     result = result.split('\n')
@@ -82,7 +101,13 @@ def print_rectangles_from_string(result):
             vals = [int(s)
                     for s in result[i].split()]
             rectangles.append(vals)
+    return width, height, n, rectangles
 
+
+def print_rectangles_from_string(result):
+    """Prints the rectangles found in the solution
+    """
+    width, height, n, rectangles = split_results_from_string(result)
     # define Matplotlib figure and axis
     fig = plt.figure()
     ax = fig.gca()
