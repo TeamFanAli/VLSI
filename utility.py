@@ -53,6 +53,7 @@ def split_output(output):
         tuple: The minizinc variables
     """
     output = output.split('\n')
+    print(output)
     makespan = int(output[3][len("makespan = "):])
     starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
     ends = map(int, output[1][len("End times = ["):-1].split(','))

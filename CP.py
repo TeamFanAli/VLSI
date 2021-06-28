@@ -36,7 +36,7 @@ class CPRunner():
         instance["duration"] = durations
         instance["req"] = req
         instance["w"] = width
-        result = instance.solve(timeout=timedelta(minutes=3))
+        result = instance.solve(timeout=timedelta(seconds=10))
         # Output the array q
         print(result)
         solution_txt = postprocess(self.input_lines, str(result))
@@ -44,12 +44,12 @@ class CPRunner():
         print(solution_txt)
         print_rectangles_from_string(solution_txt)
         width, height, n, rectangles = split_results_from_string(solution_txt)
-        x_finder = Model(".x-finder.mzn")
+        x_finder = Model("./x-finder.mzn")
         x_instance = Instance(gecode, x_finder)
         x_instance["n"] = n
-        x_instance["x"] = [row[3] for row in rectangles]
-        x_instance["duration"] = durations
-        x_instance["req"] = req
+        x_instance["y"] = [row[3] for row in rectangles]
+        x_instance["widths"] = durations
+        x_instance["heights"] = req
         x_instance["w"] = width
         x_instance["makespan"] = height
         final = x_instance.solve(timeout=timedelta(minutes=1))
