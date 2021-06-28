@@ -35,7 +35,6 @@ def split_output(output):
         tuple: The minizinc variables
     """
     output = output.split('\n')
-    print(output)
     makespan = int(output[3][len("makespan = "):])
     starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
     ends = map(int, output[1][len("End times = ["):-1].split(','))
@@ -102,6 +101,7 @@ def split_results_from_string(result):
 def print_rectangles_from_string(result):
     """Prints the rectangles found in the solution
     """
+    print("\nResult:\n{0}".format(result))
     width, height, n, rectangles = split_results_from_string(result)
     fig = plt.figure()
     ax = fig.gca()
@@ -117,7 +117,7 @@ def print_rectangles_from_string(result):
 
 
 def random_hatch():
-    return random.choice(['', '/', '//', 'xx', '\\', '\\\\', 'O', 'o', '.'])
+    return random.choice(['', '/', '//', 'x', 'xx', '\\', '\\\\', 'O', 'o', '.'])
 
 
 def random_color():
