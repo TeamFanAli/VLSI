@@ -1,4 +1,4 @@
-include "globals.mzn"
+include "globals.mzn";
 
 int: n;   % Number of chips
 set of int: CHIPS = 1..n;
@@ -10,7 +10,7 @@ int: w;
 int: makespan;
 
 
-int: max_x = makespan - min(widths)
+int: max_x = makespan - min(widths);
 array[CHIPS] of var 0..max_x: x;
 
 %Rect.Left = x[i]
@@ -27,4 +27,4 @@ constraint forall(i in CHIPS) (x[i] + widths[i] <= w);
 
 solve satisfy;
 
-output ["x = ", show(x), "\n"];
+output ["x = ", show(x)];

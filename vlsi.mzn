@@ -15,7 +15,6 @@ int: total_area = sum(c in CHIPS)(req[c]*duration[c]);
 int: lower_bound = (total_area div w) +
     if (total_area mod w == 0) then 0 else 1 endif; % I'm not so sure about this
 
-array[CHIPS] of var 0..0: chip_x;
 
 %resource constraints
 constraint cumulative(start, duration, [req[c] | c in CHIPS], w);
@@ -39,7 +38,6 @@ output [
     "End times = ", show([start[i]+duration[i] | i in CHIPS]), "\n",
     "Reqs = ", show(req), "\n",
     "makespan = ", show(makespan), "\n",
-    "y = " ,show(chip_x), "\n",
     "total_area = ", show(total_area), "\n",
     "lower_bound = ", show(lower_bound), "\n",
     "mod = ", show(total_area mod w), "\n"

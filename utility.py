@@ -3,33 +3,15 @@ from matplotlib.patches import Rectangle
 import random
 
 
-def preprocess(path):
-    """
-    Transform txt files in a string containing data readable from Minizinc.
-    Also flip the chips in order to transform the problem from vertical to horizontal
-    :param path: string containing the path of the .txt file (or any text file)
-    :return: string containing preprocessed data
-    """
-    with open(path, "r") as txt_file:
-        data = txt_file.readlines()
-    data[0] = "w=" + data[0].replace("\n", ";\n")
-    data[1] = "n=" + data[1].replace("\n", ";\n")
-    duration = 'duration=['
-    req = 'req=['
-    for i in range(2, len(data)):
-        line = data[i].replace('\n', '').split(' ')
-        duration += line[1]
-        req += line[0]
-        if not i == len(data) - 1:
-            duration += ','
-            req += ','
-        else:
-            duration += '];\n'
-            req += '];\n'
-    return data[0] + data[1] + duration + req
+def preprocess(input):
+    """Takes an input txt, outputs the data we need
 
+    Args:
+        input (string): Input as defined in the project specs
 
-def preprocess_for_py(input):
+    Returns:
+        tuple: all the data we need for the optimization
+    """
     width = int(input[0])
     n = int(input[1])
     durations = []
@@ -44,7 +26,7 @@ def preprocess_for_py(input):
 
 
 def split_output(output):
-    """Splits the output from a minizinc solving
+    """Splits the output from a minizinc solution
 
     Args:
         output (string): MiniZinc output
@@ -61,27 +43,39 @@ def split_output(output):
     return makespan, starts, ends, reqs
 
 
-def postprocess(input, output):
+def postprocess(width, height, n, starts, x, req, durations):
+    """Generates a solution string as per the requirements
+
+    Args:
+        width (int): width of the chip board
+        height (int): height of the chip board
+        n (int): number of chips
+        starts ([int]): list of chips' Ys
+        x ([int]): list of chips' Xs
+        req ([int]): list of chips heights
+        durations ([int]): list of chips widths
+
+    Returns:
+        string: solution text to be output to a file
     """
-    Transform the output of MiniZinc in a format suitable with project specs
-    :param input: The text contained in the original input file
-    :param output: the text returned by MiniZinc
-    :return: string containing the result formatted as project specs require
+    solution = ""
+    solution += f"{width} {height}\n"
+    solution += f"{n}\n"
+    for i in range(len(starts)):
+        solution += f"{req[i]} {durations[i]} {x[i]} {starts[i]}\n"
+    return solution
+
+
+def split_x_finder(output):
+    """Splits the output from the second MiniZinc script
+
+    Args:
+        output (string): output of the x-finder.mzn script
+
+    Returns:
+        [int]: list of the chips' Xs
     """
-    makespan, starts, ends, reqs = split_output(output)
-    y = list(map(int, output[4][len("y = ["):-1].split(',')))
-    h = [0 for _ in range(makespan)]
-    #y = [0 for _ in range(len(starts))]
-    """
-    for i, (s, e, r) in sorted(enumerate(zip(starts, ends, reqs)), key=lambda x: (x[1][0], x[1][2])):
-        y[i] = max(h[s:e])
-        h[s:e] = [h[j] + r if h[j] == y[i] else h[j] for j in range(s, e)]
-        print(h)
-    """
-    input[0] += " {0}".format(makespan)
-    for j in range(2, len(input) - 1):
-        input[j] += " {0} {1}".format(y[j - 2], starts[j - 2])
-    return '\n'.join(input)
+    return list(map(int, output[len("x = ["):-1].split(',')))
 
 
 def split_results_from_string(result):
@@ -109,7 +103,6 @@ def print_rectangles_from_string(result):
     """Prints the rectangles found in the solution
     """
     width, height, n, rectangles = split_results_from_string(result)
-    # define Matplotlib figure and axis
     fig = plt.figure()
     ax = fig.gca()
     ax.set_xticks(range(width))
