@@ -39,10 +39,11 @@ def split_output(output):
     starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
     ends = map(int, output[1][len("End times = ["):-1].split(','))
     reqs = map(int, output[2][len("Reqs = ["):-1].split(','))
-    return makespan, starts, ends, reqs
+    rotated = map(int, output[3][len("Rotated = ["):-1].split(','))
+    return makespan, starts, ends, reqs, rotated
 
 
-def postprocess(width, height, n, starts, x, req, durations):
+def postprocess(width, height, n, starts, x, req, durations, rotated):
     """Generates a solution string as per the requirements
 
     Args:
@@ -61,7 +62,10 @@ def postprocess(width, height, n, starts, x, req, durations):
     solution += f"{width} {height}\n"
     solution += f"{n}\n"
     for i in range(len(starts)):
-        solution += f"{req[i]} {durations[i]} {x[i]} {starts[i]}\n"
+        if not rotated[i]:
+            solution += f"{req[i]} {durations[i]} {x[i]} {starts[i]}\n"
+        else:
+            solution += f"{durations[i]} {req[i]} {x[i]} {starts[i]}\n"
     return solution
 
 
