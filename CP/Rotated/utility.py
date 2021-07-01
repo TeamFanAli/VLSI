@@ -103,6 +103,22 @@ def split_results_from_string(result):
     return width, height, n, rectangles
 
 
+def get_pretty_ticks(width, height):
+    """Generates a list of pretty, well-spaced ticks for matplotlib
+
+    Args:
+        width (int): width of the motherboard
+        height (int): height of the motherboard
+
+    Returns:
+        tuple: lists of x and y ticks
+    """
+    NO_TICKS = 10
+    x_ticks = [int(float(x)/(NO_TICKS-1)*(width)) for x in range(NO_TICKS)]
+    y_ticks = [int(float(x)/(NO_TICKS-1)*(height)) for x in range(NO_TICKS)]
+    return x_ticks, y_ticks
+
+
 def print_rectangles_from_string(result):
     """Prints the rectangles found in the solution
     """
@@ -111,12 +127,9 @@ def print_rectangles_from_string(result):
     fig = plt.figure()
     ax = fig.gca()
     # Had to do this append because range doesn't include the last one
-    xticks = list(range(0, width, int(width/10)))
-    xticks.append(width)
-    yticks = list(range(0, height, int(height/10)))
-    yticks.append(height)
-    ax.set_xticks(xticks)
-    ax.set_yticks(yticks)
+    x_ticks, y_ticks = get_pretty_ticks(width, height)
+    ax.set_xticks(x_ticks)
+    ax.set_yticks(y_ticks)
     plt.xlim(0, width)
     plt.ylim(0, height)
     for rectangle in rectangles:
