@@ -5,10 +5,8 @@ import random
 
 def preprocess(input):
     """Takes an input txt, outputs the data we need
-
     Args:
         input (string): Input as defined in the project specs
-
     Returns:
         tuple: all the data we need for the optimization
     """
@@ -27,10 +25,8 @@ def preprocess(input):
 
 def split_output(output):
     """Splits the output from a minizinc solution
-
     Args:
         output (string): MiniZinc output
-
     Returns:
         tuple: The minizinc variables
     """
@@ -39,13 +35,11 @@ def split_output(output):
     starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
     ends = map(int, output[1][len("End times = ["):-1].split(','))
     reqs = map(int, output[2][len("Reqs = ["):-1].split(','))
-    rotated = map(int, output[3][len("Rotated = ["):-1].split(','))
-    return makespan, starts, ends, reqs, rotated
+    return makespan, starts, ends, reqs
 
 
-def postprocess(width, height, n, starts, x, req, durations, rotated):
+def postprocess(width, height, n, starts, x, req, durations):
     """Generates a solution string as per the requirements
-
     Args:
         width (int): width of the chip board
         height (int): height of the chip board
@@ -54,7 +48,6 @@ def postprocess(width, height, n, starts, x, req, durations, rotated):
         x ([int]): list of chips' Xs
         req ([int]): list of chips heights
         durations ([int]): list of chips widths
-
     Returns:
         string: solution text to be output to a file
     """
@@ -62,19 +55,14 @@ def postprocess(width, height, n, starts, x, req, durations, rotated):
     solution += f"{width} {height}\n"
     solution += f"{n}\n"
     for i in range(len(starts)):
-        if not rotated[i]:
-            solution += f"{req[i]} {durations[i]} {x[i]} {starts[i]}\n"
-        else:
-            solution += f"{durations[i]} {req[i]} {x[i]} {starts[i]}\n"
+        solution += f"{req[i]} {durations[i]} {x[i]} {starts[i]}\n"
     return solution
 
 
 def split_x_finder(output):
     """Splits the output from the second MiniZinc script
-
     Args:
         output (string): output of the x-finder.mzn script
-
     Returns:
         [int]: list of the chips' Xs
     """
@@ -83,10 +71,8 @@ def split_x_finder(output):
 
 def split_results_from_string(result):
     """Generates a tuple of results from a solution txt (as seen in the project specs)
-
     Args:
         result (strin): solution text
-
     Returns:
         tuple: The results
     """
@@ -126,7 +112,6 @@ def random_hatch():
 
 def random_color():
     """Generates a random RGBA color
-
     Returns:
         tuple: Tuple of RGB channels in [0,1]
     """
