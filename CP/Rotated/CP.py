@@ -2,7 +2,7 @@
     Script that runs the preprocessing step, the MiniZinc optimizer, then the output graph
     """
 import argparse
-from CP.Standard.utility import preprocess, postprocess, print_rectangles_from_string, split_output, split_x_finder
+from utility import preprocess, postprocess, print_rectangles_from_string, split_output, split_x_finder
 from minizinc import Instance, Model, Solver
 from datetime import timedelta
 from halo import Halo
@@ -53,11 +53,8 @@ class CPRunner():
         print("\n\nFirst instance solved in %s seconds" %
               round((time()-first_instance_start), 4))
         spinner.stop()
-        makespan, starts, ends, reqs, rotated = split_output(str(result))
-        for i in range(n):
-            if rotated[i]:
-                # Esoteric but pythonic
-                req[i], durations[i] = durations[i], req[i]
+        print(str(result))
+        makespan, starts, ends, reqs, rotations = split_output(str(result))
         spinner = Halo(
             text=f'Solving the second MiniZinc instance to find Xs, timeout={X_TIMEOUT_MINS} minutes', spinner='monkey')
         spinner.start()
@@ -77,7 +74,7 @@ class CPRunner():
             print("Second instance (X solver) solved in %s seconds, now generating the graph" %
                   round(time()-second_instance_start, 4))
             solution = postprocess(
-                width, makespan, n, starts, x, req, durations)
+                width, makespan, n, starts, x, req, durations, rotations)
             print_rectangles_from_string(solution)
         else:
             print("Sorry, no solution was found 😟 Try raising the timeouts.")

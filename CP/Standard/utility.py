@@ -33,7 +33,7 @@ def split_output(output):
     output = output.split('\n')
     makespan = int(output[3][len("makespan = "):])
     starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
-    ends = map(int, output[1][len("End times = ["):-1].split(','))
+    ends = map(int, output[1][len("Durations = ["):-1].split(','))
     reqs = map(int, output[2][len("Reqs = ["):-1].split(','))
     return makespan, starts, ends, reqs
 

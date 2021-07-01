@@ -37,10 +37,10 @@ def split_output(output):
     output = output.split('\n')
     makespan = int(output[3][len("makespan = "):])
     starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
-    ends = map(int, output[1][len("End times = ["):-1].split(','))
+    durations = map(int, output[1][len("Durations = ["):-1].split(','))
     reqs = map(int, output[2][len("Reqs = ["):-1].split(','))
-    rotated = map(int, output[3][len("Rotated = ["):-1].split(','))
-    return makespan, starts, ends, reqs, rotated
+    rotated = list(map(lambda x: x.strip() == "true", output[4][len("rotation = ["):-1].split(',')))
+    return makespan, starts, durations, reqs, rotated
 
 
 def postprocess(width, height, n, starts, x, req, durations, rotated):
