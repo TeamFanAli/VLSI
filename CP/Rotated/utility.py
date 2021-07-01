@@ -39,7 +39,8 @@ def split_output(output):
     starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
     durations = map(int, output[1][len("Durations = ["):-1].split(','))
     reqs = map(int, output[2][len("Reqs = ["):-1].split(','))
-    rotated = list(map(lambda x: x.strip() == "true", output[4][len("rotation = ["):-1].split(',')))
+    rotated = list(map(lambda x: x.strip() == "true",
+                       output[4][len("rotation = ["):-1].split(',')))
     return makespan, starts, durations, reqs, rotated
 
 
@@ -109,8 +110,13 @@ def print_rectangles_from_string(result):
     width, height, n, rectangles = split_results_from_string(result)
     fig = plt.figure()
     ax = fig.gca()
-    ax.set_xticks(range(width))
-    ax.set_yticks(range(height))
+    # Had to do this append because range doesn't include the last one
+    xticks = list(range(0, width, int(width/10)))
+    xticks.append(width)
+    yticks = list(range(0, height, int(height/10)))
+    yticks.append(height)
+    ax.set_xticks(xticks)
+    ax.set_yticks(yticks)
     plt.xlim(0, width)
     plt.ylim(0, height)
     for rectangle in rectangles:
