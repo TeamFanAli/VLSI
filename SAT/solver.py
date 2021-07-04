@@ -10,13 +10,13 @@ def powerset(iterable):
     return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
 
-MAX_T = 2
+MAX_T = 3
 n = 2
-max_requirement = 1
+max_requirement = 8
 timesteps = range(0, MAX_T)
 tasks = range(0, n)
-requirements = np.array([1, 1])
-durations = np.array([1, 1])
+requirements = np.array([4, 4])
+durations = np.array([3, 1])
 
 
 def find_subsets(requirements, max_requirement):
@@ -36,7 +36,7 @@ def find_subsets(requirements, max_requirement):
 
 def find_subsets_to_max(max, requirement):
     subsets = []
-    for i in range(max-requirement):
+    for i in range(max-requirement+1):
         subsets.append(np.arange(i, i+requirement, 1))
     return subsets
 
@@ -64,19 +64,6 @@ for t in range(MAX_T):
                 else:  # Otherwise, create the timestep dict and the bool
                     task_active[t] = {task: Bool(f'{t},{task}')}
                 ands.append(task_active[t][task])
-            # Then, specify that other tasks can't be active if this is
-            for other_task in tasks:
-                if other_task != task:
-                    try:
-                        ands.append(Not(task_active[t][other_task]))
-                    except KeyError:
-                        if t in task_active:  # If the timestep is already defined, just add this bool
-                            task_active[t][other_task] = Bool(
-                                f'{t},{other_task}')
-                        else:  # Otherwise, create the timestep dict and the bool
-                            task_active[t] = {
-                                other_task: Bool(f'{t},{other_task}')}
-                        ands.append(Not(task_active[t][other_task]))
             # Then negate the other ones
             for excluded_task in set(tasks)-set(subset):
                 try:
@@ -118,9 +105,12 @@ for task in tasks:
         task_ands.append(Or(ors))
 if len(task_ands) > 0:
     s.add(And(task_ands))
+
+
 s.check()
 print(s)
 m = s.model()
+print(m)
 # Dictionary containing task:[timesteps]
 cumulative_solution = {t: [] for t in tasks}
 for t in m.decls():
@@ -190,9 +180,11 @@ print(s.check())
 m = s.model()
 # To find the starts of the chips, we just get the minimum of the Xs and Ys
 starts = {t: [MAX_T, max_requirement] for t in tasks}
+print(s)
 for t in m.decls():
     if is_true(m[t]):
         task, x, y = tuple([int(to_cast) for to_cast in str(t).split(',')])
+        print(task, x, y)
         if starts[task][0] > x:
             starts[task][0] = x
         if starts[task][1] > y:
