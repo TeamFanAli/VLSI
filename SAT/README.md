@@ -10,6 +10,7 @@ We'll have to encode what follows:
   - to do so, we'll have to calculate all the permutations of tasks that are $\le$ than the requirement
     - For example, if we had three tasks $R={2,3,4}$ and available resources $=5$, the sets should be $\{2,3\},\{2\},\{4\}, \{3\}$, which we'll encode as $(A_0 \wedge A_1)\vee(A_0)\vee(A_2)\vee(A_1)$ for each timestep: $\bigwedge_{t=0}^{t=max_t} ((A_{0,t} \wedge A_{1,t})\vee(A_{0,t})\vee(A_{2,t})\vee(A_{1,t}))$
 - When we find a solution, we can just lower $max_t$ at $max_t-1$ and check if solutions exist.
+- We have to impose that, in the end, each task was executed exactly once (for its time duration)
 
 
 
