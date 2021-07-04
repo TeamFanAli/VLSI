@@ -190,15 +190,15 @@ def solve_instance(max_width, max_height, n, widths, heights):
 if __name__ == "__main__":
     w, n, widths, heights = preprocess(parse_args())
     # Iterate until it's sat
-    height = 1
+    height = 0
     found_sat = False
     while not found_sat:
+        height += 1
         print(f"Trying solution with height={height}")
         first_instance_start = time()
         found_sat, solution = solve_instance(w, height, n, widths, heights)
         print("which took %s seconds" %
               round((time()-first_instance_start), 4))
-        height += 1
     # TODO: implement a smarter height incrementation (for example, try 1,3,5,10,12 and work like a binary search)
     print(f"🚂 Height={height} worked out!")
     print(solution)
