@@ -1,5 +1,8 @@
 from itertools import chain, combinations
 import numpy as np
+import argparse
+from time import time
+from utility import parse_args, preprocess, postprocess, print_rectangles_from_string
 from numpy.core.numeric import full
 from z3 import And, Or, Not, Solver, Bool, is_true, sat, unsat
 
@@ -105,7 +108,6 @@ def solve_instance(max_width, max_height, n, widths, heights):
     if s.check() == unsat:
         return False, {}
     m = s.model()
-    print(s)
     # Dictionary containing task:[timesteps]
     cumulative_solution = {t: [] for t in tasks}
     for t in m.decls():
@@ -186,15 +188,20 @@ def solve_instance(max_width, max_height, n, widths, heights):
 
 
 if __name__ == "__main__":
-    w = 5
-    n = 4
-    widths = np.array([3, 5, 5, 5])
-    heights = np.array([3, 1, 3, 5])
+    w, n, widths, heights = preprocess(parse_args())
     # Iterate until it's sat
-    height = 0
+    height = 1
     found_sat = False
     while not found_sat:
-        height += 1
+        print(f"Trying solution with height={height}")
+        first_instance_start = time()
         found_sat, solution = solve_instance(w, height, n, widths, heights)
-    print(f"🚂 Found a solution with height {height}!")
+        print("which took %s seconds" %
+              round((time()-first_instance_start), 4))
+        height += 1
+    # TODO: implement a smarter height incrementation (for example, try 1,3,5,10,12 and work like a binary search)
+    print(f"🚂 Height={height} worked out!")
     print(solution)
+    print(widths, heights)
+    solution_string = postprocess(w, height, n, widths, heights, solution)
+    print_rectangles_from_string(solution_string)
