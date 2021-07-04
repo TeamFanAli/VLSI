@@ -191,10 +191,10 @@ if __name__ == "__main__":
     widths = np.array([3, 5, 5, 5])
     heights = np.array([3, 1, 3, 5])
     # Iterate until it's sat
-    height = 1
+    height = 0
     found_sat = False
     while not found_sat:
-        found_sat, solution = solve_instance(w, height, n, widths, heights)
         height += 1
+        found_sat, solution = solve_instance(w, height, n, widths, heights)
     print(f"🚂 Found a solution with height {height}!")
     print(solution)
