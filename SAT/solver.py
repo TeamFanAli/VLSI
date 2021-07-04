@@ -1,7 +1,7 @@
 from itertools import chain, combinations
 import numpy as np
 from numpy.core.numeric import full
-from z3 import And, Or, Not, Solver, Bool, is_true
+from z3 import And, Or, Not, Solver, Bool, is_true, sat, unsat
 
 
 def powerset(iterable):
@@ -9,29 +9,18 @@ def powerset(iterable):
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
-# def solve_instance(max_width, max_height, n, widths, heights):
 
-
-MAX_T = 12  # Which is the board max height
-n = 4
-max_requirement = 5  # Which is the board width
-timesteps = range(0, MAX_T)
-tasks = range(0, n)
-requirements = np.array([3, 5, 5, 5])
-durations = np.array([3, 1, 3, 5])
-
-
-def find_subsets(requirements, max_requirement):
-    """Finds all the subsets of tasks that can be run within max_requirement.
+def find_subsets(widths, max_width):
+    """Finds all the subsets of chips that can sit in max_width.
     Exponentially bad.
 
     Args:
-        requirements (list[int]): list of requirements
-        max_requirement (int): max computational power
+        widths (list[int]): list of widths
+        max_width (int): max width
     """
     result = []
-    for possible_set_indices in powerset(range(len(requirements))):
-        if sum(requirements[list(possible_set_indices)]) <= max_requirement:
+    for possible_set_indices in powerset(range(len(widths))):
+        if sum(widths[list(possible_set_indices)]) <= max_width:
             result.append(list(possible_set_indices))
     return result
 
@@ -43,152 +32,169 @@ def find_subsets_to_max(max, requirement):
     return subsets
 
 
-s = Solver()
-possible_permutations = find_subsets(requirements, max_requirement)
-all_conditions = []
-task_active = {}
-"""
-First, we constrain the resources:
- for each timestep, we check the possible permutations that respect the resources constraint
- and specify an OR to choose between one of these for each timestep
- """
-for t in range(MAX_T):
-    ors = []
-    for subset in possible_permutations:
-        ands = []
-        for task in subset:
-            # First try to look for the bool in the saved ones
-            try:
-                ands.append(task_active[t][task])
-            except KeyError:
-                if t in task_active:  # If the timestep is already defined, just add this bool
-                    task_active[t][task] = Bool(f'{t},{task}')
-                else:  # Otherwise, create the timestep dict and the bool
-                    task_active[t] = {task: Bool(f'{t},{task}')}
-                ands.append(task_active[t][task])
-            # Then negate the other ones
-            for excluded_task in set(tasks)-set(subset):
+def solve_instance(max_width, max_height, n, widths, heights):
+    tasks = range(0, n)
+    s = Solver()
+    possible_permutations = find_subsets(widths, max_width)
+    all_conditions = []
+    task_active = {}
+    """
+    First, we constrain the resources:
+    for each timestep, we check the possible permutations that respect the resources constraint
+    and specify an OR to choose between one of these for each timestep
+    """
+    for t in range(max_height):
+        ors = []
+        for subset in possible_permutations:
+            ands = []
+            for task in subset:
+                # First try to look for the bool in the saved ones
                 try:
-                    ands.append(Not(task_active[t][excluded_task]))
+                    ands.append(task_active[t][task])
                 except KeyError:
                     if t in task_active:  # If the timestep is already defined, just add this bool
-                        task_active[t][excluded_task] = Bool(
-                            f'{t},{excluded_task}')
+                        task_active[t][task] = Bool(f'{t},{task}')
                     else:  # Otherwise, create the timestep dict and the bool
-                        task_active[t] = {excluded_task: Bool(
-                            f'{t},{excluded_task}')}
-                    ands.append(Not(task_active[t][excluded_task]))
-        if len(ands) > 0:
-            subset_clause = And(ands)
-            if subset_clause is not None:
-                ors.append(subset_clause)
-    ors.append(And([Not(task_active[t][task]) for task in tasks]))
-    all_conditions.append(Or(ors))
-if len(all_conditions) > 0:
-    s.add(And(all_conditions))
-
-"""
-Then, the duration constraint: if a task becomes active at time i, it will have to stay active until time i+d
-We therefore have to get the set of sequences of d timesteps between 0 and t_max
-"""
-task_ands = []
-for task in tasks:
-    ors = []
-    for timestep_sequence in find_subsets_to_max(MAX_T, durations[task]):
-        ands = []
-        for timestep in timestep_sequence:
-            ands.append(task_active[timestep][task])
-        # And negate the other timesteps
-        for excluded_timestep in np.setdiff1d(np.arange(0, MAX_T, 1), timestep_sequence):
-            ands.append(Not(task_active[excluded_timestep][task]))
-        if len(ands) > 0:
-            ors.append(And(ands))
-    if len(ors) > 0:
-        task_ands.append(Or(ors))
-if len(task_ands) > 0:
-    s.add(And(task_ands))
-
-
-s.check()
-print(s)
-m = s.model()
-print(m)
-# Dictionary containing task:[timesteps]
-cumulative_solution = {t: [] for t in tasks}
-for t in m.decls():
-    if is_true(m[t]):
-        timestep, task = tuple(str(t).split(','))
-        cumulative_solution[int(task)].append(int(timestep))
-print(cumulative_solution)
-
-task_active = {t: {} for t in tasks}
-full_proposition = []
-for task in tasks:
-    ors = []
-    for subset_of_requirement in find_subsets_to_max(max_requirement, requirements[task]):
-        # We want to get all the timesteps in which the task is true
-        x_ands = []
-        for x_timestep in cumulative_solution[task]:
-            # Then AND the Ys of that task at X
-            ands = []
-            for y in subset_of_requirement:
-                try:
-                    ands.append(task_active[task][x_timestep][y])
-                except KeyError:
-                    if x_timestep in task_active[task]:
-                        task_active[task][x_timestep][y] = Bool(
-                            f"{task},{x_timestep},{y}")
-                    else:
-                        task_active[task][x_timestep] = {
-                            y: Bool(f"{task},{x_timestep},{y}")}
-                    ands.append(task_active[task][x_timestep][y])
-                for other_task in tasks:
-                    if other_task != task:
-                        try:
-                            ands.append(
-                                Not(task_active[other_task][x_timestep][y]))
-                        except KeyError:
-                            if x_timestep in task_active[other_task]:
-                                task_active[other_task][x_timestep][y] = Bool(
-                                    f"{other_task},{x_timestep},{y}")
-                            else:
-                                task_active[other_task][x_timestep] = {
-                                    y: Bool(f"{other_task},{x_timestep},{y}")}
-                            ands.append(
-                                Not(task_active[other_task][x_timestep][y]))
-                for y_excluded in np.setdiff1d(np.arange(0, max_requirement, 1), subset_of_requirement):
+                        task_active[t] = {task: Bool(f'{t},{task}')}
+                    ands.append(task_active[t][task])
+                # Then negate the other ones
+                for excluded_task in set(tasks)-set(subset):
                     try:
-                        ands.append(
-                            Not(task_active[task][x_timestep][y_excluded]))
+                        ands.append(Not(task_active[t][excluded_task]))
+                    except KeyError:
+                        if t in task_active:  # If the timestep is already defined, just add this bool
+                            task_active[t][excluded_task] = Bool(
+                                f'{t},{excluded_task}')
+                        else:  # Otherwise, create the timestep dict and the bool
+                            task_active[t] = {excluded_task: Bool(
+                                f'{t},{excluded_task}')}
+                        ands.append(Not(task_active[t][excluded_task]))
+            if len(ands) > 0:
+                subset_clause = And(ands)
+                if subset_clause is not None:
+                    ors.append(subset_clause)
+        ors.append(And([Not(task_active[t][task]) for task in tasks]))
+        all_conditions.append(Or(ors))
+    if len(all_conditions) > 0:
+        s.add(And(all_conditions))
+
+    """
+    Then, the duration constraint: if a task becomes active at time i, it will have to stay active until time i+d
+    We therefore have to get the set of sequences of d timesteps between 0 and t_max
+    """
+    task_ands = []
+    for task in tasks:
+        ors = []
+        height_subsets = find_subsets_to_max(max_height, heights[task])
+        if len(height_subsets) == 0:
+            return False, {}
+        for timestep_sequence in height_subsets:
+            ands = []
+            for timestep in timestep_sequence:
+                ands.append(task_active[timestep][task])
+            # And negate the other timesteps
+            for excluded_timestep in np.setdiff1d(np.arange(0, max_height, 1), timestep_sequence):
+                ands.append(Not(task_active[excluded_timestep][task]))
+            if len(ands) > 0:
+                ors.append(And(ands))
+        if len(ors) > 0:
+            task_ands.append(Or(ors))
+    if len(task_ands) > 0:
+        s.add(And(task_ands))
+
+    if s.check() == unsat:
+        return False, {}
+    m = s.model()
+    print(s)
+    # Dictionary containing task:[timesteps]
+    cumulative_solution = {t: [] for t in tasks}
+    for t in m.decls():
+        if is_true(m[t]):
+            timestep, task = tuple(str(t).split(','))
+            cumulative_solution[int(task)].append(int(timestep))
+    task_active = {t: {} for t in tasks}
+    full_proposition = []
+    for task in tasks:
+        ors = []
+        for subset_of_requirement in find_subsets_to_max(max_width, widths[task]):
+            # We want to get all the timesteps in which the task is true
+            x_ands = []
+            for x_timestep in cumulative_solution[task]:
+                # Then AND the Ys of that task at X
+                ands = []
+                for y in subset_of_requirement:
+                    try:
+                        ands.append(task_active[task][x_timestep][y])
                     except KeyError:
                         if x_timestep in task_active[task]:
-                            task_active[task][x_timestep][y_excluded] = Bool(
-                                f"{task},{x_timestep},{y_excluded}")
+                            task_active[task][x_timestep][y] = Bool(
+                                f"{task},{x_timestep},{y}")
                         else:
                             task_active[task][x_timestep] = {
-                                y_excluded: Bool(f"{task},{x_timestep},{y_excluded}")}
-                        ands.append(
-                            Not(task_active[task][x_timestep][y_excluded]))
-            if len(ands) > 0:
-                x_ands.append(And(ands))
-        if len(x_ands) > 0:
-            ors.append(And(x_ands))
-    if len(ors) > 0:
-        full_proposition.append(Or(ors))
-s = Solver()
-if len(full_proposition) > 0:
-    s.add(full_proposition)
-print(s.check())
-m = s.model()
-# To find the starts of the chips, we just get the minimum of the Xs and Ys
-starts = {t: [MAX_T, max_requirement] for t in tasks}
-print(s)
-for t in m.decls():
-    if is_true(m[t]):
-        task, x, y = tuple([int(to_cast) for to_cast in str(t).split(',')])
-        print(task, x, y)
-        if starts[task][0] > x:
-            starts[task][0] = x
-        if starts[task][1] > y:
-            starts[task][1] = y
-print(starts)
+                                y: Bool(f"{task},{x_timestep},{y}")}
+                        ands.append(task_active[task][x_timestep][y])
+                    for other_task in tasks:
+                        if other_task != task:
+                            try:
+                                ands.append(
+                                    Not(task_active[other_task][x_timestep][y]))
+                            except KeyError:
+                                if x_timestep in task_active[other_task]:
+                                    task_active[other_task][x_timestep][y] = Bool(
+                                        f"{other_task},{x_timestep},{y}")
+                                else:
+                                    task_active[other_task][x_timestep] = {
+                                        y: Bool(f"{other_task},{x_timestep},{y}")}
+                                ands.append(
+                                    Not(task_active[other_task][x_timestep][y]))
+                    for y_excluded in np.setdiff1d(np.arange(0, max_width, 1), subset_of_requirement):
+                        try:
+                            ands.append(
+                                Not(task_active[task][x_timestep][y_excluded]))
+                        except KeyError:
+                            if x_timestep in task_active[task]:
+                                task_active[task][x_timestep][y_excluded] = Bool(
+                                    f"{task},{x_timestep},{y_excluded}")
+                            else:
+                                task_active[task][x_timestep] = {
+                                    y_excluded: Bool(f"{task},{x_timestep},{y_excluded}")}
+                            ands.append(
+                                Not(task_active[task][x_timestep][y_excluded]))
+                if len(ands) > 0:
+                    x_ands.append(And(ands))
+            if len(x_ands) > 0:
+                ors.append(And(x_ands))
+        if len(ors) > 0:
+            full_proposition.append(Or(ors))
+    s = Solver()
+    if len(full_proposition) > 0:
+        s.add(full_proposition)
+    if s.check() == unsat:
+        return False, {}
+    m = s.model()
+    # To find the starts of the chips, we just get the minimum of the Xs and Ys
+    starts = {t: [max_height, max_width] for t in tasks}
+    for t in m.decls():
+        if is_true(m[t]):
+            task, x, y = tuple([int(to_cast) for to_cast in str(t).split(',')])
+            if starts[task][0] > x:
+                starts[task][0] = x
+            if starts[task][1] > y:
+                starts[task][1] = y
+
+    return True, starts
+
+
+if __name__ == "__main__":
+    w = 5
+    n = 4
+    widths = np.array([3, 5, 5, 5])
+    heights = np.array([3, 1, 3, 5])
+    # Iterate until it's sat
+    height = 1
+    found_sat = False
+    while not found_sat:
+        found_sat, solution = solve_instance(w, height, n, widths, heights)
+        height += 1
+    print(f"🚂 Found a solution with height {height}!")
+    print(solution)
