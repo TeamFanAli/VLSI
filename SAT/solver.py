@@ -9,14 +9,16 @@ def powerset(iterable):
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
+# def solve_instance(max_width, max_height, n, widths, heights):
 
-MAX_T = 3
-n = 2
-max_requirement = 8
+
+MAX_T = 12  # Which is the board max height
+n = 4
+max_requirement = 5  # Which is the board width
 timesteps = range(0, MAX_T)
 tasks = range(0, n)
-requirements = np.array([4, 4])
-durations = np.array([3, 1])
+requirements = np.array([3, 5, 5, 5])
+durations = np.array([3, 1, 3, 5])
 
 
 def find_subsets(requirements, max_requirement):
@@ -80,8 +82,8 @@ for t in range(MAX_T):
             subset_clause = And(ands)
             if subset_clause is not None:
                 ors.append(subset_clause)
-    if len(ors) > 0:
-        all_conditions.append(Or(ors))
+    ors.append(And([Not(task_active[t][task]) for task in tasks]))
+    all_conditions.append(Or(ors))
 if len(all_conditions) > 0:
     s.add(And(all_conditions))
 
