@@ -59,7 +59,7 @@ class CPRunner:
         spinner = Halo(
             text=f'Solving the second MiniZinc instance to find Xs, timeout={X_TIMEOUT_MINS} minutes', spinner='monkey')
         spinner.start()
-        x_finder = Model("./x-finder.mzn")
+        x_finder = Model("x-finder.mzn")
         x_instance = Instance(gecode, x_finder)
         x_instance["n"] = n
         x_instance["y"] = starts
