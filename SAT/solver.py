@@ -190,7 +190,7 @@ def solve_instance(max_width, max_height, n, widths, heights):
 if __name__ == "__main__":
     w, n, widths, heights = preprocess(parse_args())
     # Iterate until it's sat
-    height = int(w*0.8)  # Heuristic
+    height = w  # Heuristic
     found_sat = False
     decrementing = False
     last_working_solution = None
