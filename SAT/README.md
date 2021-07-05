@@ -20,11 +20,3 @@ To find the Ys, then, we'll have a different encoding:
 - We'll have to find all the permutations of tasks for a given x: if we had task 1 and 3 ($req_1=2, req_3=3$) true at X=2 with $max_{req}=3$ we'll have all the possible permutations (being 1 before 3 and 3 before 1) encoded as $(A_{2,0,1}\wedge A_{2,1,1} \wedge A_{2,2,2}\wedge A_{2,3,2}\wedge A_{2,4,2}) \vee (A_{2,0,2}\wedge A_{2,1,2} \wedge A_{2,2,2}\wedge A_{2,3,1}\wedge A_{2,4,1})$
 - Then, we have to impose that if $A_{x,y,t}$ is true and $A_{x+1}$ is true in the input data, $A_{x+1,y,t}$ has to be true.
 
-
-
-
-
-
-
-$((A_0 \wedge \neg B_0) \vee (B_0 \wedge \neg A_0)) \wedge ((A_1 \wedge \neg B_1)\vee (B_1 \wedge \neg A_1)))$
-
