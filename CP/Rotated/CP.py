@@ -12,8 +12,9 @@ Y_TIMEOUT_MINS = 4
 X_TIMEOUT_MINS = 1
 
 
-class CPRunner():
-    def __init__(self):
+class CPRunner:
+    def __init__(self, rotation_allowed=False):
+        self.rotation_allowed = rotation_allowed
         self.register_args()
         self.read_file()
         self.preprocess_and_run()
@@ -34,7 +35,7 @@ class CPRunner():
             text='Instantiating the first MiniZinc solver to find Ys', spinner='monkey')
         spinner.start()
         # Load n-Queens model from file
-        vlsi = Model("./vlsi.mzn")
+        vlsi = Model("vlsi-rot.mzn") if self.rotation_allowed else Model("vlsi.mzn")
         # Find the MiniZinc solver configuration for Gecode
         gecode = Solver.lookup("gecode")
         # Create an Instance of the n-Queens model for Gecode
@@ -54,7 +55,7 @@ class CPRunner():
               round((time()-first_instance_start), 4))
         spinner.stop()
         print(str(result))
-        makespan, starts, ends, reqs, rotations = split_output(str(result))
+        makespan, starts, durations, reqs, rotations = split_output(str(result))
         spinner = Halo(
             text=f'Solving the second MiniZinc instance to find Xs, timeout={X_TIMEOUT_MINS} minutes', spinner='monkey')
         spinner.start()
@@ -62,23 +63,24 @@ class CPRunner():
         x_instance = Instance(gecode, x_finder)
         x_instance["n"] = n
         x_instance["y"] = starts
-        x_instance["widths"] = req
+        x_instance["widths"] = reqs
         x_instance["heights"] = durations
         x_instance["w"] = width
         x_instance["makespan"] = makespan
         second_instance_start = time()
         final = x_instance.solve(timeout=timedelta(minutes=1))
-        if str(final) != "":
+        if final.solution is not None:
             x = split_x_finder(str(final))
             spinner.stop()
             print("Second instance (X solver) solved in %s seconds, now generating the graph" %
                   round(time()-second_instance_start, 4))
             solution = postprocess(
-                width, makespan, n, starts, x, req, durations, rotations)
+                width, makespan, n, starts, x, reqs, durations)
             print_rectangles_from_string(solution)
         else:
             print("Sorry, no solution was found 😟 Try raising the timeouts.")
 
 
 if __name__ == "__main__":
-    CPRunner()
+    rotation = input("Allow rotation? Y/n\n") in ["y", "Y", "yes", "Yes"]
+    CPRunner(rotation)

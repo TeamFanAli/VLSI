@@ -1,33 +1,55 @@
 include "globals.mzn";
 
-int: n;
-set of int: Chips = 1..n;
-set of int: Rotations = 1..2; % Two possible rotations for a chip
-set of int: Dimensions = 1..2; % Working with 2D chips
+int: n;   % Number of tasks
+set of int: CHIPS = 1..n;  
+array[CHIPS] of int: duration; % Task durations
 
-int: available_width;
-%array[Chips] of int: heights;
+int: w; % Resource capacities
+array[CHIPS] of int: req; %Resource requirements of tasks
 
-%int: t = sum(duration) - min(duration);
 
-%int: total_area = sum(c in Chips)(req[c]*duration[c]);
-%int: lower_bound = (total_area div w) +
-%    if (total_area mod w == 0) then 0 else 1 endif; % I'm not so sure about this
+int: t = sum(c in CHIPS)(max(duration[c], req[c])) - min(c in CHIPS)(min(duration[c], req[c]));
+array[CHIPS] of var 0..t: start; %Variables for task start times
+array[CHIPS] of var bool: rotation;
 
-% We need two arrays for both the widths and heights: 
-% one will contain the optional values (which will be a (Chips,2) matrix),
-% the other one the "decided"
+int: total_area = sum(c in CHIPS)(req[c] * duration[c]);
+int: lower_bound = (total_area div w) +
+    if (total_area mod w == 0) then 0 else 1 endif; % I'm not so sure about this
 
-array[Chips,Rotations, Dimensions] of int: sizes;
 
-array[Chips,Dimensions] of int: decided_sizes;
+%resource constraints
+constraint cumulative(
+    start,
+    [if (rotation[c]) then req[c] else duration[c] endif | c in CHIPS],
+    [if (rotation[c]) then duration[c] else req[c] endif | c in CHIPS],
+    w);
 
-int: upper_bound = sum(sizes[..,1,..]);
-array[Chips] of var 0..upper_bound: x;
-array[Chips, Rotations] of var opt 0..upper_bound: x_rotations;
 
-constraint forall(c in Chips) (alternative(x, decided_sizes[c,..], 
-                                [x_rotations[c, r] | r in Rotations], 
-                                sizes[c, .. ,..]));
+%makespan as objective function
+var lower_bound..sum(c in CHIPS)(max(duration[c], req[c])): makespan = max(c in CHIPS)(
+    start[c] +
+    if (rotation[c]) then
+        req[c]
+    else
+        duration[c]
+    endif);
 
-constraint cumulative(x, decided_sizes[..,1], decided_sizes[..,2], available_width);
+solve minimize makespan;
+
+output [
+    "Start times = ", show(start), "\n",
+    "Durations = ", show([
+        if (rotation[i]) then
+            req[i]
+        else
+            duration[i]
+        endif | i in CHIPS]), "\n",
+    "Reqs = ", show([
+        if (rotation[i]) then
+            duration[i]
+        else
+            req[i]
+        endif | i in CHIPS]), "\n",
+    "makespan = ", show(makespan), "\n",
+    "rotation = ", show(rotation), "\n"
+];

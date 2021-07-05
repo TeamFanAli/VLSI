@@ -8,9 +8,9 @@ int: w; % Resource capacities
 array[CHIPS] of int: req; %Resource requirements of tasks
 
 
-int: t = sum(c in CHIPS)(max(duration[c], req[c])) - min(c in CHIPS)(min(duration[c], req[c]));
+int: t = sum(duration) - min(duration);
 array[CHIPS] of var 0..t: start; %Variables for task start times
-array[CHIPS] of var bool: rotation;
+
 
 int: total_area = sum(c in CHIPS)(req[c] * duration[c]);
 int: lower_bound = (total_area div w) +
@@ -18,38 +18,27 @@ int: lower_bound = (total_area div w) +
 
 
 %resource constraints
-constraint cumulative(
-    start,
-    [if (rotation[c]) then req[c] else duration[c] endif | c in CHIPS],
-    [if (rotation[c]) then duration[c] else req[c] endif | c in CHIPS],
-    w);
+constraint cumulative(start, duration, req, w);
+
+
+
+
 
 
 %makespan as objective function
-var lower_bound..sum(c in CHIPS)(max(duration[c], req[c])): makespan = max(c in CHIPS)(
-    start[c] +
-    if (rotation[c]) then
-        req[c]
-    else
-        duration[c]
-    endif);
+var lower_bound..sum(duration): makespan = max(c in CHIPS)(start[c] + duration[c]);
+
+
+
+
+
+
 
 solve minimize makespan;
 
 output [
     "Start times = ", show(start), "\n",
-    "Durations = ", show([
-        if (rotation[i]) then
-            req[i]
-        else
-            duration[i]
-        endif | i in CHIPS]), "\n",
-    "Reqs = ", show([
-        if (rotation[i]) then
-            duration[i]
-        else
-            req[i]
-        endif | i in CHIPS]), "\n",
+    "Durations = ", show(duration), "\n",
+    "Reqs = ", show(req), "\n",
     "makespan = ", show(makespan), "\n",
-    "rotation = ", show(rotation), "\n"
 ];

@@ -25,29 +25,11 @@ def preprocess(input):
     return width, n, durations, req
 
 
-def split_output(output):
-    """Splits the output from a minizinc solution
-
-    Args:
-        output (string): MiniZinc output
-
-    Returns:
-        tuple: The minizinc variables
-    """
-    output = output.split('\n')
-    makespan = int(output[3][len("makespan = "):])
-    starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
-    durations = map(int, output[1][len("Durations = ["):-1].split(','))
-    reqs = map(int, output[2][len("Reqs = ["):-1].split(','))
-    rotated = list(map(lambda x: x.strip() == "true",
-                       output[4][len("rotation = ["):-1].split(',')))
-    return makespan, starts, durations, reqs, rotated
-
-
-def postprocess(width, height, n, starts, x, req, durations, rotated):
+def postprocess(width, height, n, starts, x, req, durations):
     """Generates a solution string as per the requirements
 
     Args:
+
         width (int): width of the chip board
         height (int): height of the chip board
         n (int): number of chips
@@ -63,11 +45,30 @@ def postprocess(width, height, n, starts, x, req, durations, rotated):
     solution += f"{width} {height}\n"
     solution += f"{n}\n"
     for i in range(len(starts)):
-        if not rotated[i]:
-            solution += f"{req[i]} {durations[i]} {x[i]} {starts[i]}\n"
-        else:
-            solution += f"{durations[i]} {req[i]} {x[i]} {starts[i]}\n"
+        solution += f"{req[i]} {durations[i]} {x[i]} {starts[i]}\n"
     return solution
+
+
+def split_output(output):
+    """Splits the output from a minizinc solution
+
+    Args:
+        output (string): MiniZinc output
+
+    Returns:
+        tuple: The minizinc variables
+    """
+    output = output.split('\n')
+    makespan = int(output[3][len("makespan = "):])
+    starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
+    durations = list(map(int, output[1][len("Durations = ["):-1].split(',')))
+    reqs = list(map(int, output[2][len("Reqs = ["):-1].split(',')))
+    if len(output) >= 6:
+        rotated = list(map(lambda x: x.strip() == "true",
+                           output[4][len("rotation = ["):-1].split(',')))
+    else:
+        rotated = None
+    return makespan, starts, durations, reqs, rotated
 
 
 def split_x_finder(output):
@@ -113,9 +114,9 @@ def get_pretty_ticks(width, height):
     Returns:
         tuple: lists of x and y ticks
     """
-    NO_TICKS = 10
-    x_ticks = [int(float(x)/(NO_TICKS-1)*(width)) for x in range(NO_TICKS)]
-    y_ticks = [int(float(x)/(NO_TICKS-1)*(height)) for x in range(NO_TICKS)]
+    no_ticks = 10
+    x_ticks = [int(float(x) / (no_ticks - 1) * width) for x in range(no_ticks)]
+    y_ticks = [int(float(x) / (no_ticks - 1) * height) for x in range(no_ticks)]
     return x_ticks, y_ticks
 
 
@@ -145,8 +146,7 @@ def random_hatch():
 
 def random_color():
     """Generates a random RGBA color
-
     Returns:
         tuple: Tuple of RGB channels in [0,1]
     """
-    return (random.random(), random.random(), random.random())
+    return random.random(), random.random(), random.random()

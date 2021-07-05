@@ -10,7 +10,7 @@ int: w;
 int: makespan;
 
 
-int: max_x = makespan - min(widths);
+int: max_x = w - min(widths);
 array[CHIPS] of var 0..max_x: x;
 
 %Rect.Left = x[i]
