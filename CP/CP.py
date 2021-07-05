@@ -54,7 +54,6 @@ class CPRunner:
         print("\n\nFirst instance solved in %s seconds" %
               round((time()-first_instance_start), 4))
         spinner.stop()
-        print(str(result))
         makespan, starts, durations, reqs, rotations = split_output(str(result))
         spinner = Halo(
             text=f'Solving the second MiniZinc instance to find Xs, timeout={X_TIMEOUT_MINS} minutes', spinner='monkey')
