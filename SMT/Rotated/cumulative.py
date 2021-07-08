@@ -3,7 +3,16 @@ import numpy as np
 
 
 def cumulative(solver, starts, durations, rotations, requirements, resource_limit):
-    # This will become durations or requirements in the rotated case
+    """Cumulative constraint decomposition for Z3. Considers the possible rotations.
+
+    Args:
+        solver ([type]): [description]
+        starts (IntVector): The starts of tasks, basically the Ys of chips
+        durations (List): List of heights of circuits
+        rotations (BoolVector): contains True if the circuit is rotated, False if not
+        requirements (List): List of widths of circuits
+        resource_limit (Int): width of the chip
+    """
     upper_bound = np.sum(durations)
     tasks = [i for i in range(len(starts))
              if requirements[i] > 0 and durations[i] > 0]
@@ -14,6 +23,16 @@ def cumulative(solver, starts, durations, rotations, requirements, resource_limi
 
 
 def x_finder(solver, x, y, heights, widths, width_limit):
+    """Finds the missing coordinate after the cumulative solution is found
+
+    Args:
+        solver (Solver): The Z3 solver object
+        x (IntVector): Vector of the Xs we're looking for
+        y (List): List of the Ys found by cumulative
+        heights (List): The heights of circuits
+        widths (List): The widths of circuits
+        width_limit (Int): The maximum width of the chip
+    """
     for i in range(len(y)):
         for j in range(len(y)):
             if i != j:
