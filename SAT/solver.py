@@ -190,7 +190,10 @@ def solve_instance(max_width, max_height, n, widths, heights):
 if __name__ == "__main__":
     w, n, widths, heights = preprocess(parse_args())
     # Iterate until it's sat
-    height = w  # Heuristic
+    total_area = np.sum([widths[i] * heights[i] for i in range(len(widths))])
+    lower_bound = int(total_area / w) + \
+        (0 if (total_area % w == 0) else 1)
+    height = lower_bound  # We start checking heights at the lower bound
     found_sat = False
     decrementing = False
     last_working_solution = None
