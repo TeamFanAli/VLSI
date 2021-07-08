@@ -193,6 +193,7 @@ if __name__ == "__main__":
     total_area = np.sum([widths[i] * heights[i] for i in range(len(widths))])
     lower_bound = int(total_area / w) + \
         (0 if (total_area % w == 0) else 1)
+    upper_bound = sum(heights)
     height = lower_bound  # We start checking heights at the lower bound
     found_sat = False
     decrementing = False
@@ -206,7 +207,8 @@ if __name__ == "__main__":
         print(f"and resulted {found_sat}")
         if not found_sat and not decrementing:
             decrementing = False
-            height = int(height*1.2)
+            height = int(height*1.2) if int(height *
+                                            1.2) < upper_bound else upper_bound
         elif (not found_sat) and decrementing:
             break
         else:
