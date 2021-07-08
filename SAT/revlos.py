@@ -150,7 +150,6 @@ def solve_instance(max_width, max_height, n, widths, heights):
     if s.check() == unsat:
         return False, {}
     m = s.model()
-    print(m)
     # Dictionary containing task:[timesteps]
     cumulative_solution = {t: [] for t in tasks}
     for t in m.decls():
@@ -160,11 +159,13 @@ def solve_instance(max_width, max_height, n, widths, heights):
                 (int(timestep), rotation.strip() == "True"))
     # We then invert height and widths for rotated circuits
     for i in range(len(cumulative_solution)):
-        if cumulative_solution[i][1]:
+        # To check if the circuit is rotated, we take value 1 (the rotation) at timestep 0, since it will be the same at all timesteps
+        if cumulative_solution[i][0][1]:
             widths[i], heights[i] = heights[i], widths[i]
-    print(cumulative_solution)
-    cumulative_solution = [cumulative_solution[i][0]
-                           for i in range(len(cumulative_solution))]
+        # Then, we can get rid of the rotation infos
+        for t in range(len(cumulative_solution[i])):
+            cumulative_solution[i][t] = cumulative_solution[i][t][0]
+
     task_active = {t: {} for t in tasks}
     full_proposition = []
     for task in tasks:
@@ -229,7 +230,6 @@ def solve_instance(max_width, max_height, n, widths, heights):
     starts = {t: [max_height, max_width] for t in tasks}
     for t in m.decls():
         if is_true(m[t]):
-            print(t)
             task, x, y = tuple([int(to_cast) for to_cast in str(t).split(',')])
             if starts[task][0] > x:
                 starts[task][0] = x
@@ -246,7 +246,6 @@ if __name__ == "__main__":
     lower_bound = int(total_area / w) + \
         (0 if (total_area % w == 0) else 1)
     upper_bound = sum(heights)
-    print(upper_bound)
     height = lower_bound  # We start checking heights at the lower bound
     found_sat = False
     decrementing = False
@@ -269,8 +268,6 @@ if __name__ == "__main__":
             decrementing = True
             last_working_solution = solution
             height -= 1
-    print(last_working_solution)
-    print(widths, heights)
     solution_string = postprocess(
         w, height, n, widths, heights, last_working_solution)
     print_rectangles_from_string(solution_string)
