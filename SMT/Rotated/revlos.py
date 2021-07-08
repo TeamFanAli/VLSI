@@ -1,3 +1,13 @@
+"""
+SMT solver for the VLSI problem, allowing rotations
+
+This is the rotating VLSI solver, allowing 
+rotations in the chips. It exploits the Z3 SMT solver.
+Needs the cumulative.py and utility.py scripts.
+
+Authors: TeamFanAli (github.com/teamfanali)
+Version: 1.0
+"""
 from numpy.core.defchararray import lower, upper
 from cumulative import cumulative, x_finder
 from z3 import *
@@ -7,11 +17,30 @@ from time import time
 
 
 def declare_ends(solver, rotations, starts, ends, durations, req):
+    """Declares the end coordinates for each circuit, checking whether it has been rotated or not
+
+    Args:
+        solver (Solver): The Z3 solver object
+        rotations (BoolVector): contains True if the circuit is rotated, False if not
+        starts (IntVector): The starts of tasks, basically the Ys of chips
+        ends (IntVector): The ends of tasks, basically Y+height
+        durations (List): List of heights of circuits
+        req (List): List of widths of circuits
+    """
     for i in range(len(durations)):
         solver.add(ends[i] == starts[i]+If(rotations[i], req[i], durations[i]))
 
 
 def declare_max(solver, array, max):
+    """This is needed to get the makespan, which is the maximum Y.
+    We can exploit some constraints to declare a maximum: we specify that it has to be >= than all the elements,
+    but still equal to one of them.
+
+    Args:
+        solver (Solver): The Z3 solver object
+        array (IntVector): The array we want to find the maximum of.
+        max (Int): The constant that will contain the maximum.
+    """
     # We specify that max has to be greater\equal then all the elements
     for i in range(len(array)):
         solver.add(max >= array[i])
@@ -20,6 +49,15 @@ def declare_max(solver, array, max):
 
 
 def declare_makespan_bounds(solver, width, makespan, req, durations):
+    """This is needed to constrain our search a little bit by limiting makespan
+
+    Args:
+        solver ([type]): [description]
+        width (Int): The width of the chip
+        makespan (Int): The height of the chip
+        req (List): The list of requirements, i.e. our circuits' widths
+        durations (List): The list of durations, i.e. our circuits' heights
+    """
     total_area = np.sum([req[i]*durations[i]
                          for i in range(len(req))])
     lower_bound = int(total_area / width) + \
