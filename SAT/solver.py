@@ -210,6 +210,7 @@ if __name__ == "__main__":
             height = int(height*1.2) if int(height *
                                             1.2) < upper_bound else upper_bound
         elif (not found_sat) and decrementing:
+            height += 1
             break
         else:
             decrementing = True
