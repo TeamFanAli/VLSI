@@ -32,11 +32,11 @@ def postprocess(width, height, n, starts, x, req, durations):
 
         width (int): width of the chip board
         height (int): height of the chip board
-        n (int): number of chips
-        starts ([int]): list of chips' Ys
-        x ([int]): list of chips' Xs
-        req ([int]): list of chips heights
-        durations ([int]): list of chips widths
+        n (int): number of circuits
+        starts ([int]): list of circuits' Ys
+        x ([int]): list of circuits' Xs
+        req ([int]): list of circuits heights
+        durations ([int]): list of circuits widths
 
     Returns:
         string: solution text to be output to a file
@@ -78,7 +78,7 @@ def split_x_finder(output):
         output (string): output of the x-finder.mzn script
 
     Returns:
-        [int]: list of the chips' Xs
+        [int]: list of the circuits' Xs
     """
     return list(map(int, output[len("x = ["):-1].split(',')))
 
@@ -136,7 +136,6 @@ def print_rectangles_from_string(result):
     for rectangle in rectangles:
         ax.add_patch(Rectangle((rectangle[2], rectangle[3]), rectangle[0], rectangle[1], fill=True,
                                color=random_color(), hatch=random_hatch(), alpha=0.5, zorder=100, figure=fig))
-    plt.grid()
     plt.show()
 
 
