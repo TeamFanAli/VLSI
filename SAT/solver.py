@@ -189,6 +189,7 @@ def solve_instance(max_width, max_height, n, widths, heights):
 
 if __name__ == "__main__":
     w, n, widths, heights = preprocess(parse_args())
+    print(heights)
     # Iterate until it's sat
     total_area = np.sum([widths[i] * heights[i] for i in range(len(widths))])
     lower_bound = int(total_area / w) + \
@@ -207,8 +208,9 @@ if __name__ == "__main__":
         print(f"and resulted {found_sat}")
         if not found_sat and not decrementing:
             decrementing = False
-            height = int(height*1.2) if int(height *
-                                            1.2) < upper_bound else upper_bound
+            print(upper_bound)
+            height = int(height*1.5) if int(height *
+                                            1.5) < upper_bound else upper_bound
         elif (not found_sat) and decrementing:
             height += 1
             break
