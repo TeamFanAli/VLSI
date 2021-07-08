@@ -22,7 +22,7 @@ def preprocess(input):
                     for s in input[i].split()]
             durations.append(vals[1])
             req.append(vals[0])
-    return width, n, np.array(durations), np.array(req)
+    return width, n, np.array(req), np.array(durations)
 
 
 def postprocess(width, height, n, widths, heights, sat_solution):
