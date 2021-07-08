@@ -30,11 +30,11 @@ def postprocess(width, height, n, widths, heights, x, y):
     Args:
         width (int): width of the chip board
         height (int): height of the chip board
-        n (int): number of chips
-        starts ([int]): list of chips' Ys
-        x ([int]): list of chips' Xs
-        req ([int]): list of chips heights
-        durations ([int]): list of chips widths
+        n (int): number of circuits
+        starts ([int]): list of circuits' Ys
+        x ([int]): list of circuits' Xs
+        req ([int]): list of circuits heights
+        durations ([int]): list of circuits widths
     Returns:
         string: solution text to be output to a file
     """

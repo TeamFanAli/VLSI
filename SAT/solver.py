@@ -14,7 +14,7 @@ def powerset(iterable):
 
 
 def find_subsets(widths, max_width):
-    """Finds all the subsets of chips that can sit in max_width.
+    """Finds all the subsets of circuits that can sit in max_width.
     Exponentially bad.
 
     Args:
@@ -174,7 +174,7 @@ def solve_instance(max_width, max_height, n, widths, heights):
     if s.check() == unsat:
         return False, {}
     m = s.model()
-    # To find the starts of the chips, we just get the minimum of the Xs and Ys
+    # To find the starts of the circuits, we just get the minimum of the Xs and Ys
     starts = {t: [max_height, max_width] for t in tasks}
     for t in m.decls():
         if is_true(m[t]):
