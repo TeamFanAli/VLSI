@@ -123,7 +123,6 @@ def get_pretty_ticks(width, height):
 def print_rectangles_from_string(result):
     """Prints the rectangles found in the solution
     """
-    print("\nResult:\n{0}".format(result))
     width, height, n, rectangles = split_results_from_string(result)
     fig = plt.figure()
     ax = fig.gca()
