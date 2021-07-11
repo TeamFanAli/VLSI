@@ -13,13 +13,30 @@ def cumulative(solver, starts, durations, rotations, requirements, resource_limi
         requirements (List): List of widths of circuits
         resource_limit (Int): width of the chip
     """
-    upper_bound = np.sum(durations)
-    tasks = [i for i in range(len(starts))
-             if requirements[i] > 0 and durations[i] > 0]
+    # We'll have to change durations and requirement to support rotations:
+    # durations[i] -> If(rotations[i], requirements[i], durations[i])
+    # requirements[i] -> If(rotations[i], durations[i], requirements[i])
     solver.add(And([starts[i] >= 0 for i in range(len(starts))]))
-    for t in range(0, upper_bound + 1):
-        solver.add(Sum([(If(starts[i] <= t, 1, 0) * If(t < starts[i] + If(rotations[i], requirements[i], durations[i]), 1, 0))*If(rotations[i], durations[i], requirements[i])
-                        for i in tasks]) <= resource_limit)
+    for task in range(len(starts)):
+        sum = []
+        for other_task in range(len(starts)):
+            if task != other_task:
+                sum.append(If(And([starts[other_task] <= starts[task], starts[task] < (
+                    starts[other_task] + If(rotations[other_task], requirements[other_task], durations[other_task]))]), 1, 0)*If(rotations[other_task], durations[other_task], requirements[other_task]))
+        solver.add(resource_limit >= (
+            If(rotations[task], durations[task], requirements[task]) + Sum(sum)))
+    # Then, we can add the helper constraints
+    for i in range(len(starts)):
+        for j in range(i):
+            solver.add(
+                Or([starts[j] >= starts[i], starts[j] < (starts[i]+If(rotations[i], requirements[i], durations[i]))]))
+            solver.add(
+                Or([starts[i] >= starts[j], starts[i] < (starts[j]+If(rotations[j], requirements[j], durations[j]))]))
+            solver.add(Or([starts[j] >= starts[i], starts[i] >= starts[j]]))
+            solver.add(Implies(starts[j] >= starts[i],
+                               starts[i] < (starts[j]+If(rotations[j], requirements[j], durations[j]))))
+            solver.add(Implies(starts[i] >= starts[j],
+                               starts[j] < (starts[i]+If(rotations[i], requirements[i], durations[i]))))
 
 
 def x_finder(solver, x, y, heights, widths, width_limit):
