@@ -4,7 +4,7 @@ import argparse
 from time import time
 from utility import parse_args, preprocess, postprocess, print_rectangles_from_string
 from numpy.core.numeric import full
-from z3 import And, Or, Not, Solver, Bool, is_true, sat, unsat
+from z3 import And, Or, Not, Solver, Bool, is_true, sat, unsat, Implies
 
 
 def powerset(iterable):
@@ -168,6 +168,12 @@ def solve_instance(max_width, max_height, n, widths, heights):
                 ors.append(And(x_ands))
         if len(ors) > 0:
             full_proposition.append(Or(ors))
+    # We can impose that for each x,y, if a task is active there, the other ones aren't
+    for task in tasks:
+        for x in range(max_width):
+            for y in range(max_height):
+                Implies(task_active[task][x][y], And(
+                    [Not(task_active[task][x][y]) for other_task in tasks if str(other_task) != str(task)]))
     s = Solver()
     if len(full_proposition) > 0:
         s.add(full_proposition)
