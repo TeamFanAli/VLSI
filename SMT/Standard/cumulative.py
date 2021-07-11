@@ -12,13 +12,28 @@ def cumulative(solver, starts, durations, requirements, resource_limit):
         requirements (List): List of widths of circuits
         resource_limit (Int): width of the chip
     """
-    upper_bound = np.sum(durations)
-    tasks = [i for i in range(len(starts))
-             if requirements[i] > 0 and durations[i] > 0]
     solver.add(And([starts[i] >= 0 for i in range(len(starts))]))
-    for t in range(0, upper_bound + 1):
-        solver.add(Sum([(If(starts[i] <= t, 1, 0) * If(t < starts[i] + durations[i], 1, 0))*requirements[i]
-                        for i in tasks]) <= resource_limit)
+    for task in range(len(starts)):
+        sum = []
+        for other_task in range(len(starts)):
+            if task != other_task:
+                sum.append(If(And([starts[other_task] <= starts[task], starts[task] < (
+                    starts[other_task] + durations[other_task])]), 1, 0)*requirements[other_task])
+        solver.add(resource_limit >= (requirements[task] + Sum(sum)))
+    # Then, we can add the helper constraints
+    # B_{ij}^1 = starts[j] >= starts[i]
+    # B_{ij}^2 = starts[j] < (starts[i]+durations[i])
+    for i in range(len(starts)):
+        for j in range(i):
+            solver.add(
+                Or([starts[j] >= starts[i], starts[j] < (starts[i]+durations[i])]))
+            solver.add(
+                Or([starts[i] >= starts[j], starts[i] < (starts[j]+durations[j])]))
+            solver.add(Or([starts[j] >= starts[i], starts[i] >= starts[j]]))
+            solver.add(Implies(starts[j] >= starts[i],
+                               starts[i] < (starts[j]+durations[j])))
+            solver.add(Implies(starts[i] >= starts[j],
+                               starts[j] < (starts[i]+durations[i])))
 
 
 def x_finder(solver, x, y, heights, widths, width_limit):
