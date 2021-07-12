@@ -7,6 +7,7 @@ from minizinc import Instance, Model, Solver
 from datetime import timedelta
 from halo import Halo
 from time import time
+import numpy as np
 
 Y_TIMEOUT_MINS = 4
 X_TIMEOUT_MINS = 1
@@ -56,19 +57,24 @@ class CPRunner:
         with self.args.file as txt_file:
             self.input_lines = txt_file.read().split('\n')
 
-    def preprocess_and_run(self):
+    def preprocess_and_run(self, discarded_solutions=[]):
         width, n, durations, req = preprocess(self.input_lines)
+        if discarded_solutions == []:
+            discarded_solutions = np.empty((0, n)).tolist()
         spinner = Halo(
             text='Instantiating the first MiniZinc solver to find Ys', spinner='monkey')
         if self.args.verbosity > 0:
             spinner.start()
-        vlsi = Model("vlsi-rot.mzn") if self.args.rotation else Model("vlsi.mzn")
+        vlsi = Model(
+            "vlsi-rot.mzn") if self.args.rotation else Model("vlsi.mzn")
         solver = Solver.lookup(self.args.solver)
         instance = Instance(solver, vlsi)
         instance["n"] = n
         instance["duration"] = durations
         instance["req"] = req
         instance["w"] = width
+        instance["no_of_discarded_solutions"] = len(discarded_solutions)
+        instance["discarded_solutions"] = discarded_solutions
         if self.args.verbosity > 0:
             spinner.stop()
             spinner = Halo(
@@ -84,7 +90,8 @@ class CPRunner:
                 timeout=timedelta(minutes=Y_TIMEOUT_MINS),
                 optimisation_level=self.args.optimization
             )
-        makespan, starts, durations, reqs, rotations = split_output(str(result))
+        makespan, starts, durations, reqs, rotations = split_output(
+            str(result))
         ex_time_1 = round(result.statistics['time'].total_seconds(), 4)
         if self.args.verbosity > 0:
             print("\n\nFirst instance solved in %s seconds" % ex_time_1)
@@ -107,7 +114,8 @@ class CPRunner:
             ex_time_2 = round(final.statistics['time'].total_seconds(), 4)
             if self.args.verbosity > 0:
                 spinner.stop()
-                print("Second instance (X solver) solved in %s seconds" % ex_time_2)
+                print("Second instance (X solver) solved in %s seconds" %
+                      ex_time_2)
             solution = postprocess(
                 width, makespan, n, starts, x, reqs, durations)
             if self.args.verbosity == 0:
@@ -124,7 +132,10 @@ class CPRunner:
             if not self.args.text_only:
                 print_rectangles_from_string(solution)
         else:
-            print("Sorry, no solution was found 😟 Try raising the timeouts.")
+            spinner.stop()
+            print("Sorry, no solution was found 😟 I'm gonna reset and try again")
+            discarded_solutions.append(starts)
+            self.preprocess_and_run(discarded_solutions)
 
 
 if __name__ == "__main__":

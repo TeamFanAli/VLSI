@@ -7,6 +7,9 @@ array[CIRCUITS] of int: duration; % Task durations
 int: w; % Resource capacities
 array[CIRCUITS] of int: req; %Resource requirements of tasks
 
+int: no_of_discarded_solutions;
+set of int: set_of_discarded_solutions = 1..no_of_discarded_solutions;
+array [set_of_discarded_solutions,CIRCUITS] of int: discarded_solutions;
 
 int: t = sum(duration) - min(duration);
 array[CIRCUITS] of var 0..t: start; %Variables for task start times
@@ -20,8 +23,8 @@ int: lower_bound = (total_area div w) +
 %resource constraints
 constraint cumulative(start, duration, req, w);
 
-
-
+%impose difference from discarded solutions
+constraint forall(d in set_of_discarded_solutions)(start != discarded_solutions[d,..]);
 
 
 
