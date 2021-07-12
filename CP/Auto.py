@@ -1,16 +1,20 @@
-import os.popen
+import os
 
 if __name__ == '__main__':
-    instances = ['../instances/ins-10.txt', '../instances/ins-20.txt', '../instances/ins-30.txt']
-    solvers = ["gecode", "chuffed"]
-    optimizations = range(6)
-    processes = range(1, 11)
-    for s in solvers:
-        if s == "chuffed":
-            for i, o in zip(instances,optimizations):
-                os.popen("CP.py {i} -s chuffed -o {o} -to -v 0")
-                os.popen("CP.py {i} -s chuffed -o {o} -to -v 0 -r")
-        else:
-            for i, o, p in zip(instances, optimizations, processes):
-                os.popen("CP.py {i} -s {s} -o {o} -p {p} -to -v 0")
-                os.popen("CP.py {i} -s {s} -o {o} -p {p} -to -v 0 -r")
+    n = 5
+    for i in range(1,41):
+        values1 = []
+        values2 = []
+        for j in range(n):
+            output = os.popen(
+                f"python CP.py ../instances/ins-{i}.txt -v 0 -to -o 0 -p 3").read().split(" ")
+            v1 = float(output[0])
+            v2 = float(output[1])
+            values1.append(v1)
+            values2.append(v2)
+            print(f"{j+1}/{n} ", end='')
+            if v1 >= 239:
+                print("reached time cape, skipping to next instance ", end='')
+                break
+        print(f'instance {i}:')
+        print("{0} {1}".format(round(sum(values1)/len(values1), 2), round(sum(values2)/len(values2), 2)))

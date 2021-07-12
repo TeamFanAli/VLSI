@@ -80,6 +80,7 @@ class CPRunner:
             spinner = Halo(
                 text=f'Solving the first MiniZinc instance, timeout={Y_TIMEOUT_MINS} minutes', spinner='monkey')
             spinner.start()
+        start = time()
         if self.args.processes > 1:
             result = instance.solve(
                 timeout=timedelta(minutes=Y_TIMEOUT_MINS),
@@ -90,9 +91,9 @@ class CPRunner:
                 timeout=timedelta(minutes=Y_TIMEOUT_MINS),
                 optimisation_level=self.args.optimization
             )
-        makespan, starts, durations, reqs, rotations = split_output(
-            str(result))
-        ex_time_1 = round(result.statistics['time'].total_seconds(), 4)
+        end = time()
+        makespan, starts, durations, reqs, rotations = split_output(str(result))
+        ex_time_1 = round(end - start, 4)
         if self.args.verbosity > 0:
             print("\n\nFirst instance solved in %s seconds" % ex_time_1)
             spinner.stop()
@@ -101,17 +102,19 @@ class CPRunner:
                 spinner='monkey')
             spinner.start()
         x_finder = Model("x-finder.mzn")
-        x_instance = Instance(solver, x_finder)
+        x_instance = Instance(Solver.lookup("gecode"), x_finder)
         x_instance["n"] = n
         x_instance["y"] = starts
         x_instance["widths"] = reqs
         x_instance["heights"] = durations
         x_instance["w"] = width
         x_instance["makespan"] = makespan
-        final = x_instance.solve(timeout=timedelta(minutes=1))
+        start = time()
+        final = x_instance.solve()
+        end = time()
         if final.solution is not None:
             x = split_x_finder(str(final))
-            ex_time_2 = round(final.statistics['time'].total_seconds(), 4)
+            ex_time_2 = round(end - start, 4)
             if self.args.verbosity > 0:
                 spinner.stop()
                 print("Second instance (X solver) solved in %s seconds" %
