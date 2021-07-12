@@ -5,6 +5,10 @@ set of int: CIRCUITS = 1..n;
 array[CIRCUITS] of int: duration; % Task durations
 
 int: w; % Resource capacities
+int: no_of_discarded_solutions;
+set of int: set_of_discarded_solutions = 1..no_of_discarded_solutions;
+array [set_of_discarded_solutions,CIRCUITS] of int: discarded_solutions;
+
 array[CIRCUITS] of int: req; %Resource requirements of tasks
 
 
@@ -24,6 +28,8 @@ constraint cumulative(
     [if (rotation[c]) then duration[c] else req[c] endif | c in CIRCUITS],
     w);
 
+%impose difference from discarded solutions
+constraint forall(d in set_of_discarded_solutions)(start != discarded_solutions[d,..]);
 
 %makespan as objective function
 var lower_bound..sum(c in CIRCUITS)(max(duration[c], req[c])): makespan = max(c in CIRCUITS)(
