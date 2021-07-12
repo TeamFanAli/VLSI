@@ -9,7 +9,6 @@ Authors: TeamFanAli (github.com/teamfanali)
 Version: 1.0
 """
 from numpy.core.defchararray import lower, upper
-from cumulative import cumulative, x_finder
 from z3 import *
 from utility import *
 from halo import Halo
@@ -69,12 +68,11 @@ def declare_makespan_bounds(solver, width, makespan, req, durations):
     solver.add(makespan >= lower_bound)
 
 
-if __name__ == "__main__":
-    input = parse_args()
-    width, n, durations, req = preprocess(input)
-    spinner = Halo(
-        text=f'Solving the cumulative constraint to find the Ys', spinner='monkey')
-    spinner.start()
+def solve(width, n, durations, req, verbosity):
+    if verbosity > 0:
+        spinner = Halo(
+            text=f'Solving the cumulative constraint to find the Ys', spinner='monkey')
+        spinner.start()
     solver = Optimize()
     starts = IntVector('starts', n)
     ends = IntVector('ends', n)
@@ -89,13 +87,15 @@ if __name__ == "__main__":
     is_sat = solver.check()
     model = solver.model()
     height = model[makespan]
-    spinner.stop()
-    print(f"Solved the cumulative optimization in %s seconds" %
-          round((time()-starting_time), 4))
+    if verbosity > 0:
+        spinner.stop()
+        print(f"Solved the cumulative optimization in %s seconds" %
+              round((time()-starting_time), 4))
     assert is_sat
-    spinner = Halo(
-        text=f'Now satisfying the X constraints', spinner='monkey')
-    spinner.start()
+    if verbosity > 0:
+        spinner = Halo(
+            text=f'Now satisfying the X constraints', spinner='monkey')
+        spinner.start()
     y = [model[starts[i]] for i in range(len(starts))]
     rotations = [model[rotations[i]] for i in range(len(rotations))]
     # We can swap width and height for rotated circuits and act like nothing happened
@@ -108,9 +108,69 @@ if __name__ == "__main__":
     x_solver.check()
     model = x_solver.model()
     x = [model[x[i]] for i in range(len(x))]
-    spinner.stop()
-    print("🎉 Everything done in a total of %s seconds!" %
-          round((time()-starting_time), 4))
-    result = postprocess(
-        width, height, n, req, durations, x, y)
-    print_rectangles_from_string(result)
+    if verbosity > 0:
+        spinner.stop()
+        print("🎉 Optimization done in a total of %s seconds!" %
+              round((time()-starting_time), 4))
+    return height, req, durations, x, y
+
+
+def cumulative(solver, starts, durations, rotations, requirements, resource_limit):
+    """Cumulative constraint decomposition for Z3. Considers the possible rotations.
+
+    Args:
+        solver ([type]): [description]
+        starts (IntVector): The starts of tasks, basically the Ys of chips
+        durations (List): List of heights of circuits
+        rotations (BoolVector): contains True if the circuit is rotated, False if not
+        requirements (List): List of widths of circuits
+        resource_limit (Int): width of the chip
+    """
+    # We'll have to change durations and requirement to support rotations:
+    # durations[i] -> If(rotations[i], requirements[i], durations[i])
+    # requirements[i] -> If(rotations[i], durations[i], requirements[i])
+    solver.add(And([starts[i] >= 0 for i in range(len(starts))]))
+    for task in range(len(starts)):
+        sum = []
+        for other_task in range(len(starts)):
+            if task != other_task:
+                sum.append(If(And([starts[other_task] <= starts[task], starts[task] < (
+                    starts[other_task] + If(rotations[other_task], requirements[other_task], durations[other_task]))]), 1, 0)*If(rotations[other_task], durations[other_task], requirements[other_task]))
+        solver.add(resource_limit >= (
+            If(rotations[task], durations[task], requirements[task]) + Sum(sum)))
+    # Then, we can add the helper constraints
+    for i in range(len(starts)):
+        for j in range(i):
+            solver.add(
+                Or([starts[j] >= starts[i], starts[j] < (starts[i]+If(rotations[i], requirements[i], durations[i]))]))
+            solver.add(
+                Or([starts[i] >= starts[j], starts[i] < (starts[j]+If(rotations[j], requirements[j], durations[j]))]))
+            solver.add(Or([starts[j] >= starts[i], starts[i] >= starts[j]]))
+            solver.add(Implies(starts[j] >= starts[i],
+                               starts[i] < (starts[j]+If(rotations[j], requirements[j], durations[j]))))
+            solver.add(Implies(starts[i] >= starts[j],
+                               starts[j] < (starts[i]+If(rotations[i], requirements[i], durations[i]))))
+
+
+def x_finder(solver, x, y, heights, widths, width_limit):
+    """Finds the missing coordinate after the cumulative solution is found
+
+    Args:
+        solver (Solver): The Z3 solver object
+        x (IntVector): Vector of the Xs we're looking for
+        y (List): List of the Ys found by cumulative
+        heights (List): The heights of circuits
+        widths (List): The widths of circuits
+        width_limit (Int): The maximum width of the chip
+    """
+    for i in range(len(y)):
+        for j in range(len(y)):
+            if i != j:
+                solver.add(Or(
+                    [x[i]+widths[i] <= x[j],
+                     x[j] + widths[j] <= x[i],
+                     y[i] >= y[j]+heights[j],
+                     y[j] >= y[i]+heights[i]]
+                ))
+        solver.add(x[i] + widths[i] <= width_limit)
+        solver.add(x[i] >= 0)
