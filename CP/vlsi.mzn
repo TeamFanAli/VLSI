@@ -7,12 +7,10 @@ array[CIRCUITS] of int: duration; % Task durations
 int: w; % Resource capacities
 array[CIRCUITS] of int: req; %Resource requirements of tasks
 
-int: no_of_discarded_solutions;
-set of int: set_of_discarded_solutions = 1..no_of_discarded_solutions;
-array [set_of_discarded_solutions,CIRCUITS] of int: discarded_solutions;
-
 int: t = sum(duration) - min(duration);
 array[CIRCUITS] of var 0..t: start; %Variables for task start times
+int: max_x = w - min(req);
+array[CIRCUITS] of var 0..max_x: x;
 
 
 int: total_area = sum(c in CIRCUITS)(req[c] * duration[c]);
@@ -21,12 +19,18 @@ int: lower_bound = (total_area div w) +
 
 
 %resource constraints
-constraint cumulative(start, duration, req, w);
+constraint cumulative(
+    start,
+    duration,
+    req,
+    w);
 
-%impose difference from discarded solutions
-constraint forall(d in set_of_discarded_solutions)(start != discarded_solutions[d,..]);
+constraint forall(i in CIRCUITS, j in CIRCUITS where i != j) ((x[i]+req[i] <= x[j]) \/
+                                            (x[j]+req[j] <= x[i]) \/
+                                            (start[i] >= start[j]+duration[j]) \/
+                                            (start[j] >= start[i]+duration[i]));
 
-
+constraint forall(i in CIRCUITS) (x[i] + req[i] <= w);
 
 %makespan as objective function
 var lower_bound..sum(duration): makespan = max(c in CIRCUITS)(start[c] + duration[c]);
@@ -37,11 +41,19 @@ var lower_bound..sum(duration): makespan = max(c in CIRCUITS)(start[c] + duratio
 
 
 
-solve minimize makespan;
+solve :: seq_search([
+    int_search(start, smallest, indomain_min),
+    int_search([makespan], input_order, indomain_min),
+    int_search(x, input_order, indomain_min)])
+    minimize makespan;
 
 output [
-    "Start times = ", show(start), "\n",
+    "y = ", show(start), "\n",
+    "x = ", show(x), "\n",
     "Durations = ", show(duration), "\n",
     "Reqs = ", show(req), "\n",
     "makespan = ", show(makespan), "\n",
 ];
+
+
+

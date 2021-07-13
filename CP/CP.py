@@ -7,10 +7,8 @@ from minizinc import Instance, Model, Solver
 from datetime import timedelta
 from halo import Halo
 from time import time
-import numpy as np
 
-Y_TIMEOUT_MINS = 4
-X_TIMEOUT_MINS = 1
+TIMEOUT_MINS = 5
 
 
 def register_args():
@@ -23,8 +21,8 @@ def register_args():
                         help="allows to rotate circuits",
                         action="store_true")
     parser.add_argument("-s", "--solver",
-                        help="CP solver of the mzn model, default is gecode",
-                        type=str, default="gecode", choices=["chuffed", "gecode", "gist"])
+                        help="CP solver of the mzn model, default is chuffed",
+                        type=str, default="chuffed", choices=["chuffed", "gecode"])
     parser.add_argument("-o", "--optimization",
                         help="set the MiniZinc compiler optimisation level, "
                              "default is 1: single pass optimization",
@@ -57,76 +55,51 @@ class CPRunner:
         with self.args.file as txt_file:
             self.input_lines = txt_file.read().split('\n')
 
-    def preprocess_and_run(self, discarded_solutions=[]):
+    def preprocess_and_run(self):
         width, n, durations, req = preprocess(self.input_lines)
-        if discarded_solutions == []:
-            discarded_solutions = np.empty((0, n)).tolist()
         spinner = Halo(
-            text='Instantiating the first MiniZinc solver to find Ys', spinner='monkey')
+            text='Instantiating the MiniZinc solver', spinner='monkey')
         if self.args.verbosity > 0:
             spinner.start()
-        vlsi = Model(
-            "vlsi-rot.mzn") if self.args.rotation else Model("vlsi.mzn")
+        vlsi = Model("vlsi-rot.mzn") if self.args.rotation else Model("vlsi.mzn")
         solver = Solver.lookup(self.args.solver)
         instance = Instance(solver, vlsi)
         instance["n"] = n
         instance["duration"] = durations
         instance["req"] = req
         instance["w"] = width
-        instance["no_of_discarded_solutions"] = len(discarded_solutions)
-        instance["discarded_solutions"] = discarded_solutions
         if self.args.verbosity > 0:
             spinner.stop()
             spinner = Halo(
-                text=f'Solving the first MiniZinc instance, timeout={Y_TIMEOUT_MINS} minutes', spinner='monkey')
+                text=f'Solving the MiniZinc instance, timeout={TIMEOUT_MINS} minutes', spinner='monkey')
             spinner.start()
         start = time()
-        if self.args.processes > 1:
+        if self.args.solver == "chuffed":
             result = instance.solve(
-                timeout=timedelta(minutes=Y_TIMEOUT_MINS),
+                timeout=timedelta(minutes=TIMEOUT_MINS),
                 optimisation_level=self.args.optimization,
-                processes=self.args.processes)
+                free_search=True)
         else:
             result = instance.solve(
-                timeout=timedelta(minutes=Y_TIMEOUT_MINS),
-                optimisation_level=self.args.optimization
-            )
+                timeout=timedelta(minutes=TIMEOUT_MINS),
+                optimisation_level=self.args.optimization,
+                processes=self.args.processes)
         end = time()
-        makespan, starts, durations, reqs, rotations = split_output(str(result))
-        ex_time_1 = round(end - start, 4)
+        ex_time = round(end - start, 4)
         if self.args.verbosity > 0:
-            print("\n\nFirst instance solved in %s seconds" % ex_time_1)
+            print("\n\nInstance solved in %s seconds" % ex_time)
             spinner.stop()
-            spinner = Halo(
-                text=f'Solving the second MiniZinc instance to find Xs, timeout={X_TIMEOUT_MINS} minutes',
-                spinner='monkey')
-            spinner.start()
-        x_finder = Model("x-finder.mzn")
-        x_instance = Instance(Solver.lookup("gecode"), x_finder)
-        x_instance["n"] = n
-        x_instance["y"] = starts
-        x_instance["widths"] = reqs
-        x_instance["heights"] = durations
-        x_instance["w"] = width
-        x_instance["makespan"] = makespan
-        start = time()
-        final = x_instance.solve()
-        end = time()
-        if final.solution is not None:
-            x = split_x_finder(str(final))
-            ex_time_2 = round(end - start, 4)
-            if self.args.verbosity > 0:
-                spinner.stop()
-                print("Second instance (X solver) solved in %s seconds" %
-                      ex_time_2)
+
+        if result.solution is not None:
+            makespan, y, x, durations, reqs, rotations = split_output(str(result))
             solution = postprocess(
-                width, makespan, n, starts, x, reqs, durations)
+                width, makespan, n, y, x, reqs, durations)
             if self.args.verbosity == 0:
-                output = "{0} {1}".format(ex_time_1, ex_time_2)
+                output = "{0} ".format(ex_time)
             elif self.args.verbosity == 1:
                 output = solution
             else:
-                output = "{0}\n\n{1}".format(solution, final.statistics)
+                output = "{0}\n\n{1}".format(solution, str(result.statistics))
             if self.args.output is None:
                 print(output)
             else:
@@ -135,10 +108,11 @@ class CPRunner:
             if not self.args.text_only:
                 print_rectangles_from_string(solution)
         else:
-            spinner.stop()
-            print("Sorry, no solution was found 😟 I'm gonna reset and try again")
-            discarded_solutions.append(starts)
-            self.preprocess_and_run(discarded_solutions)
+            if self.args.verbosity > 0:
+                spinner.stop()
+                print("The problem is unsat")
+            else:
+                print("-1 ")
 
 
 if __name__ == "__main__":

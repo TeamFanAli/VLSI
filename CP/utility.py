@@ -59,16 +59,17 @@ def split_output(output):
         tuple: The minizinc variables
     """
     output = output.split('\n')
-    makespan = int(output[3][len("makespan = "):])
-    starts = list(map(int, output[0][len("Start times = ["):-1].split(',')))
-    durations = list(map(int, output[1][len("Durations = ["):-1].split(',')))
-    reqs = list(map(int, output[2][len("Reqs = ["):-1].split(',')))
-    if len(output) >= 6:
-        rotated = list(map(lambda x: x.strip() == "true",
-                           output[4][len("rotation = ["):-1].split(',')))
+    makespan = int(output[4][len("makespan = "):])
+    y = list(map(int, output[0][len("y = ["):-1].split(',')))
+    x = list(map(int, output[1][len("x = ["):-1].split(',')))
+    durations = list(map(int, output[2][len("Durations = ["):-1].split(',')))
+    reqs = list(map(int, output[3][len("Reqs = ["):-1].split(',')))
+    if len(output) >= 7:
+        rotated = list(map(lambda xx: xx.strip() == "true",
+                           output[5][len("rotation = ["):-1].split(',')))
     else:
         rotated = None
-    return makespan, starts, durations, reqs, rotated
+    return makespan, y, x, durations, reqs, rotated
 
 
 def split_x_finder(output):
