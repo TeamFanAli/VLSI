@@ -25,7 +25,7 @@ if __name__ == '__main__':
         try:
             for j in range(n):
                 output = run_with_timeout(
-                    f"python SAT.py ../instances/ins-{i}.txt -v 0 -to", 300)
+                    f"python SMT.py ../instances/ins-{i}.txt -v 0 -to", 300)
                 seconds = re.search("time: (\d*\.\d*)", str(output),
                                     re.IGNORECASE).group(1)
                 sum += float(seconds)
