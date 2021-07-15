@@ -37,7 +37,6 @@ def read_input(file):
 if __name__ == "__main__":
     args = register_args()
     width, n, durations, req = preprocess(read_input(args.file))
-    print(durations, req)
     if args.verbosity == 0:
         start = time()
     if args.rotation:
