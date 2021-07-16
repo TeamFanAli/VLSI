@@ -18,9 +18,9 @@ def run_with_timeout(cmd, timeout):
 
 
 if __name__ == '__main__':
-    n = 1
+    n = 3
     averages = {}
-    for i in range(1, 41):
+    for i in range(26, 41):
         sum = 0
         try:
             for j in range(n):
@@ -29,7 +29,7 @@ if __name__ == '__main__':
                 seconds = re.search("time: (\d*\.\d*)", str(output),
                                     re.IGNORECASE).group(1)
                 sum += float(seconds)
-            averages[i] = sum/n
+            averages[i] = round(sum/n, 4)
             print(f'instance {i}:{averages[i]}')
         except:
             print(f"Instance {i} failed")
