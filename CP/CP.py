@@ -61,7 +61,8 @@ class CPRunner:
             text='Instantiating the MiniZinc solver', spinner='monkey')
         if self.args.verbosity > 0:
             spinner.start()
-        vlsi = Model("vlsi-rot.mzn") if self.args.rotation else Model("vlsi.mzn")
+        vlsi = Model(
+            "vlsi-rot.mzn") if self.args.rotation else Model("vlsi.mzn")
         solver = Solver.lookup(self.args.solver)
         instance = Instance(solver, vlsi)
         instance["n"] = n
@@ -91,7 +92,8 @@ class CPRunner:
             spinner.stop()
 
         if result.solution is not None:
-            makespan, y, x, durations, reqs, rotations = split_output(str(result))
+            makespan, y, x, durations, reqs, rotations = split_output(
+                str(result))
             solution = postprocess(
                 width, makespan, n, y, x, reqs, durations)
             if self.args.verbosity == 0:
@@ -104,7 +106,7 @@ class CPRunner:
                 print(output)
             else:
                 with self.args.output as file:
-                    file.write(output)
+                    file.write(solution)
             if not self.args.text_only:
                 print_rectangles_from_string(solution)
         else:
