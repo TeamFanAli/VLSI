@@ -34,7 +34,7 @@ def read_input(file):
 
 if __name__ == '__main__':
     args = register_args()
-    w, n, widths, heights = preprocess(read_input(args.file))
+    w, n, heights, widths = preprocess(read_input(args.file))
     if args.print_only:
         print("Here's the data for MiniZinc:")
         print(w, n, widths, heights)
