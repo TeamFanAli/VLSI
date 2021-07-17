@@ -117,7 +117,8 @@ def get_pretty_ticks(width, height):
     """
     no_ticks = 10
     x_ticks = [int(float(x) / (no_ticks - 1) * width) for x in range(no_ticks)]
-    y_ticks = [int(float(x) / (no_ticks - 1) * height) for x in range(no_ticks)]
+    y_ticks = [int(float(x) / (no_ticks - 1) * height)
+               for x in range(no_ticks)]
     return x_ticks, y_ticks
 
 
