@@ -4,7 +4,7 @@ Used when the MiniZinc IDE is required to generate a solution, as copying the da
 '''
 
 import argparse
-from utility import preprocess, postprocess, split_output
+from utility import preprocess, postprocess, split_output, print_rectangles_from_string
 
 
 def register_args():
@@ -45,5 +45,6 @@ if __name__ == '__main__':
             str(solution_text))
         solution = postprocess(
             w, makespan, n, y, x, reqs, durations)
+        print_rectangles_from_string(solution)
         with args.output as file:
             file.write(solution)
