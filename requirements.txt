@@ -1,0 +1,4 @@
+matplotlib
+halo
+z3-solver
+minizinc
