@@ -20,6 +20,9 @@ def register_args():
                         help="the file in which store the output, "
                              "if not specified it will be printed on the console",
                         type=argparse.FileType('w'), default=None)
+    parser.add_argument("--print-only", "-p",
+                        help="Only prints the data so that you can feed it to MiniZinc",
+                        default=False, action='store_true')
     return parser.parse_args()
 
 
@@ -32,11 +35,15 @@ def read_input(file):
 if __name__ == '__main__':
     args = register_args()
     w, n, widths, heights = preprocess(read_input(args.file))
-    with args.solution as solution:
-        solution_text = solution.read()
-    makespan, y, x, durations, reqs, rotations = split_output(
-        str(solution_text))
-    solution = postprocess(
-        w, makespan, n, y, x, reqs, durations)
-    with args.output as file:
-        file.write(solution)
+    if args.print_only:
+        print("Here's the data for MiniZinc:")
+        print(w, n, widths, heights)
+    else:
+        with args.solution as solution:
+            solution_text = solution.read()
+        makespan, y, x, durations, reqs, rotations = split_output(
+            str(solution_text))
+        solution = postprocess(
+            w, makespan, n, y, x, reqs, durations)
+        with args.output as file:
+            file.write(solution)
